@@ -27,7 +27,42 @@ form.addEventListener("submit", async (e) => {
   msg.textContent = "";
 
   const title = document.getElementById("title").value.trim();
-  const due_date = document.getElementById("dueDate").value.trim();
+  const dueInput = document.getElementById("dueDate").value.trim();
+
+  const dueDateMsg = document.getElementById("dueDateMsg");
+  // Clear previous field message
+  dueDateMsg.textContent = "";
+
+  // Validate due date exists
+  if (!dueInput) {
+    dueDateMsg.textContent = "Required";
+    return;
+  }
+
+  // Parse `datetime-local` (YYYY-MM-DDTHH:MM) into a Date object (local time)
+  let dueDateObj;
+  if (dueInput.includes("T")) {
+    const [datePart, timePart] = dueInput.split("T");
+    const [y, m, d] = datePart.split("-").map(Number);
+    const [h = 0, min = 0] = (timePart || "").split(":").map(Number);
+    dueDateObj = new Date(y, m - 1, d, h, min);
+  } else {
+    dueDateObj = new Date(dueInput);
+  }
+
+  if (isNaN(dueDateObj.getTime())) {
+    dueDateMsg.textContent = "Invalid date";
+    return;
+  }
+
+  const now = new Date();
+  if (dueDateObj <= now) {
+    dueDateMsg.textContent = "Due date must be in the future.";
+    return;
+  }
+
+  // Format to backend-friendly string: `YYYY-MM-DD HH:MM` when coming from datetime-local
+  let due_date = dueInput.includes("T") ? dueInput.replace("T", " ") : dueInput;
   const priority = document.getElementById("priority").value;
 
   // client-side validation (simple)
@@ -50,6 +85,8 @@ form.addEventListener("submit", async (e) => {
 
   form.reset();
   msg.textContent = "Task created successfully!";
+  // clear inline due date message after success
+  dueDateMsg.textContent = "";
   await fetchTasks();
 });
 

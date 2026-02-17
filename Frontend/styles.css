@@ -1,10 +1,43 @@
+/* Use border-box so padding doesn't increase element width */
+*, *::before, *::after { box-sizing: border-box; }
+
 body { font-family: system-ui, Arial, sans-serif; margin: 0; }
 .container { max-width: 900px; margin: 0 auto; padding: 24px; }
 .card { border: 1px solid #ddd; border-radius: 10px; padding: 16px; margin: 16px 0; }
+
 label { display: block; margin: 10px 0; }
-input, select, button { width: 100%; padding: 10px; margin-top: 6px; }
-button { cursor: pointer; }
+
+/* Make form controls responsive and not overflow their container */
+input, select, textarea {
+	width: 100%;
+	max-width: 100%;
+	padding: 10px;
+	margin-top: 6px;
+}
+
+/* Row wrapper for an input + inline field message */
+.field-row { display: flex; align-items: center; gap: 8px; }
+.field-row input { flex: 1 1 auto; min-width: 0; }
+
+/* Inline field message (hidden when empty) */
+.field-message:empty { display: none; }
+.field-message {
+	display: inline-block;
+	color: #721c24;
+	background-color: #f8d7da;
+	border: 1px solid #f5c6cb;
+	padding: 6px 8px;
+	border-radius: 4px;
+	font-size: 0.9rem;
+	min-width: 160px;
+}
+
+button { width: 100%; padding: 10px; margin-top: 6px; cursor: pointer; }
+
+/* Allow flex children to shrink (prevents overflow inside .row) */
 .row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.row > * { min-width: 0; }
+
 table { width: 100%; border-collapse: collapse; margin-top: 10px; }
 th, td { border-bottom: 1px solid #eee; padding: 10px; text-align: left; }
 .message { margin-top: 10px; }

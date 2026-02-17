@@ -19,8 +19,11 @@
         </label>
 
         <label>
-          Due Date (YYYY-MM-DD HH:MM)
-          <input id="dueDate" type="text" placeholder="2026-03-01 23:59" required />
+          Due Date
+          <div class="field-row">
+            <input id="dueDate" type="datetime-local" required />
+            <div id="dueDateMsg" class="field-message" aria-live="polite"></div>
+          </div>
         </label>
 
         <label>
