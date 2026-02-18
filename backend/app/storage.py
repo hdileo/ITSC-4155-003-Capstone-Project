@@ -1,28 +1,28 @@
 import uuid
-from datetime import datetime
 
-# Simple in-memory storage for Sprint 0/1
+# In-memory storage for Sprint 1
 TASKS = []
+
+PRIORITY_ORDER = {"High": 0, "Medium": 1, "Low": 2}
 
 def create_task(title: str, due_date: str, priority: str):
     task = {
         "id": str(uuid.uuid4()),
         "title": title.strip(),
         "status": "Pending",
-        "due_date": due_date,     # keep as string for now (e.g., "2026-03-01 23:59")
-        "priority": priority      # "Low" | "Medium" | "High"
+        "due_date": due_date.strip(),   # frontend sends "YYYY-MM-DD HH:MM"
+        "priority": priority.strip()     # "Low"|"Medium"|"High"
     }
     TASKS.append(task)
     return task
 
-def list_tasks(sort_by: str | None = None):
+def get_all_tasks(sort_by: str | None = None):
     tasks = list(TASKS)
 
     if sort_by == "date":
-        # naive sort by string; fine for Sprint 1 if you keep a consistent format
+        # Works correctly if due_date format is consistent: "YYYY-MM-DD HH:MM"
         tasks.sort(key=lambda t: t["due_date"])
     elif sort_by == "priority":
-        order = {"High": 0, "Medium": 1, "Low": 2}
-        tasks.sort(key=lambda t: order.get(t["priority"], 99))
+        tasks.sort(key=lambda t: PRIORITY_ORDER.get(t["priority"], 99))
 
     return tasks

@@ -1,13 +1,13 @@
 from flask import Flask
-from .routes import main
 
 def create_app():
     app = Flask(
         __name__,
-        static_folder="../../frontend",   # serves your frontend files
-        static_url_path=""               # makes / go to frontend
+        static_folder="../../frontend",
+        static_url_path=""
     )
 
-    app.register_blueprint(main)
+    from .routes import api
+    app.register_blueprint(api)
 
     return app
