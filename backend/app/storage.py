@@ -1,6 +1,18 @@
 import uuid
 
 # In-memory storage for Sprint 1
+
+#Storgae FIle( Storing our Tasks: Operations like Getting, Adding a New Task, Deleting,etc..)
+
+
+#Step #1: Need a Location to Store All our Tasks -- List 
+#Lesson #1 --> When Dealing with Priority We Can Assign a Value to It Based off a Dictionary 
+
+#Method #1: Creating a Task(We Need the Title, DueDate, Priority)
+# Displaying -- ID, Title, Status, Due Date, Priority
+
+#Second Aspect to THis --> Getting all The Tasks 
+#Storing Tasks --.
 TASKS = []
 
 PRIORITY_ORDER = {"High": 0, "Medium": 1, "Low": 2}
