@@ -25,6 +25,7 @@ async function fetchTasks() {
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
   msg.textContent = "";
+  msg.className = "message";
 
   const title = document.getElementById("title").value.trim();
   const dueInput = document.getElementById("dueDate").value.trim();
@@ -80,14 +81,22 @@ form.addEventListener("submit", async (e) => {
   const data = await res.json();
   if (!res.ok) {
     msg.textContent = data.error || "Failed to create task.";
+    msg.className = "message error";
     return;
   }
 
   form.reset();
-  msg.textContent = "Task created successfully!";
+  msg.textContent = "✓ Task created successfully!";
+  msg.className = "message success";
   // clear inline due date message after success
   dueDateMsg.textContent = "";
   await fetchTasks();
+  
+  // Clear message after 5 seconds
+  setTimeout(() => {
+    msg.textContent = "";
+    msg.className = "message";
+  }, 5000);
 });
 
 sortSelect.addEventListener("change", fetchTasks);
