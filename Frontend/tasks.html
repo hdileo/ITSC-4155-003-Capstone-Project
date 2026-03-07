@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tasks | Smart Task Planner</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<main class="container">
+
+  <nav class="navbar">
+    <div class="brand">
+      <div class="momentum-icon"></div>
+      <h1 class="logo">Momentum</h1>
+    </div>
+  
+    <div class="nav-links">
+      <a href="dashboard.html">Dashboard</a>
+      <a href="tasks.html">Tasks</a>
+      <a href="schedule.html">Schedule</a>
+    </div>
+  </nav>
+
+<!-- CREATE TASK -->
+<section class="card">
+<h2>Create Task</h2>
+
+<form id="taskForm">
+
+<label>
+Title
+<input id="title" type="text" placeholder="Math Homework" required />
+</label>
+
+<label>
+Due Date
+<div class="field-row">
+<input id="dueDate" type="datetime-local" required />
+<div id="dueDateMsg" class="field-message"></div>
+</div>
+</label>
+
+<label>
+Priority
+<select id="priority" required>
+<option value="High">High</option>
+<option value="Medium">Medium</option>
+<option value="Low">Low</option>
+</select>
+</label>
+
+<label>
+Duration (minutes)
+<input id="durationMinutes" type="number" min="1" value="60" required />
+</label>
+
+<label>
+Effort Level
+<select id="effortLevel" required>
+<option value="High">High</option>
+<option value="Medium" selected>Medium</option>
+<option value="Low">Low</option>
+</select>
+</label>
+
+<label>
+Earliest Start Date
+<input id="startAfter" type="datetime-local" />
+</label>
+
+<label>
+Category
+<select id="category" required>
+<option value="General" selected>General</option>
+<option value="School">School</option>
+<option value="Work">Work</option>
+<option value="Health">Health</option>
+<option value="Personal">Personal</option>
+</select>
+</label>
+
+<button type="submit">Save Task</button>
+
+<p id="message" class="message"></p>
+
+</form>
+</section>
+
+
+<!-- EDIT TASK -->
+<section class="card" id="editTaskSection" style="display:none;">
+
+<h2>Edit Task</h2>
+
+<form id="editTaskForm">
+
+<input type="hidden" id="editTaskId">
+
+<label>
+Title
+<input id="editTitle" type="text" required />
+</label>
+
+<label>
+Due Date
+<div class="field-row">
+<input id="editDueDate" type="datetime-local" required />
+<div id="editDueDateMsg" class="field-message"></div>
+</div>
+</label>
+
+<label>
+Priority
+<select id="editPriority" required>
+<option value="High">High</option>
+<option value="Medium">Medium</option>
+<option value="Low">Low</option>
+</select>
+</label>
+
+<label>
+Status
+<select id="editStatus" required>
+<option value="Pending">Pending</option>
+<option value="Not Started">Not Started</option>
+<option value="In Progress">In Progress</option>
+<option value="Completed">Completed</option>
+</select>
+</label>
+
+<label>
+Duration (minutes)
+<input id="editDurationMinutes" type="number" min="1" required />
+</label>
+
+<label>
+Effort Level
+<select id="editEffortLevel" required>
+<option value="High">High</option>
+<option value="Medium">Medium</option>
+<option value="Low">Low</option>
+</select>
+</label>
+
+<label>
+Earliest Start Date
+<input id="editStartAfter" type="datetime-local" />
+</label>
+
+<label>
+Category
+<select id="editCategory" required>
+<option value="General">General</option>
+<option value="School">School</option>
+<option value="Work">Work</option>
+<option value="Health">Health</option>
+<option value="Personal">Personal</option>
+</select>
+</label>
+
+<div class="row">
+<button type="submit">Update Task</button>
+<button type="button" id="cancelEditBtn">Cancel</button>
+</div>
+
+<p id="editMessage" class="message"></p>
+
+</form>
+</section>
+
+
+<!-- TASK LOG -->
+<section class="card">
+
+<div class="row">
+<h2>Task Log</h2>
+
+<div>
+<label>Sort:</label>
+<select id="sortSelect">
+<option value="">None</option>
+<option value="date">Due Date</option>
+<option value="priority">Priority</option>
+</select>
+</div>
+
+</div>
+
+<table>
+
+<thead>
+<tr>
+<th>Title</th>
+<th>Status</th>
+<th>Due Date</th>
+<th>Priority</th>
+<th>Actions</th>
+</tr>
+</thead>
+
+<tbody id="taskTableBody"></tbody>
+
+</table>
+
+</section>
+
+</main>
+
+<script src="app.js"></script>
+
+</body>
+</html>

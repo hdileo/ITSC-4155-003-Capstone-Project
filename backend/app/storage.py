@@ -1,28 +1,263 @@
-import uuid
+from .database import get_connection
+from datetime import datetime, timedelta, time
 
-# In-memory storage for Sprint 1
-TASKS = []
 
-PRIORITY_ORDER = {"High": 0, "Medium": 1, "Low": 2}
+def create_task(title, due_date, priority, duration_minutes=60, effort_level="Medium", start_after=None, category="General"):
+    conn = get_connection()
+    cursor = conn.cursor()
 
-def create_task(title: str, due_date: str, priority: str):
-    task = {
-        "id": str(uuid.uuid4()),
-        "title": title.strip(),
-        "status": "Pending",
-        "due_date": due_date.strip(),   # frontend sends "YYYY-MM-DD HH:MM"
-        "priority": priority.strip()     # "Low"|"Medium"|"High"
-    }
-    TASKS.append(task)
-    return task
+    cursor.execute("""
+        INSERT INTO tasks (
+            title,
+            due_date,
+            priority,
+            status,
+            duration_minutes,
+            effort_level,
+            start_after,
+            category
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        title,
+        due_date,
+        priority,
+        "Pending",
+        duration_minutes,
+        effort_level,
+        start_after,
+        category
+    ))
 
-def get_all_tasks(sort_by: str | None = None):
-    tasks = list(TASKS)
+    conn.commit()
+
+    task_id = cursor.lastrowid
+
+    cursor.execute("SELECT * FROM tasks WHERE task_id = ?", (task_id,))
+    task = cursor.fetchone()
+
+    conn.close()
+
+    return dict(task)
+
+
+def get_all_tasks(sort_by=None):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    query = "SELECT * FROM tasks"
 
     if sort_by == "date":
-        # Works correctly if due_date format is consistent: "YYYY-MM-DD HH:MM"
-        tasks.sort(key=lambda t: t["due_date"])
+        query += " ORDER BY due_date ASC"
     elif sort_by == "priority":
-        tasks.sort(key=lambda t: PRIORITY_ORDER.get(t["priority"], 99))
+        query += """
+        ORDER BY
+        CASE priority
+            WHEN 'High' THEN 1
+            WHEN 'Medium' THEN 2
+            WHEN 'Low' THEN 3
+        END
+        """
+
+    cursor.execute(query)
+
+    tasks = [dict(row) for row in cursor.fetchall()]
+
+    conn.close()
 
     return tasks
+
+
+def update_task(task_id, title, due_date, priority, status, duration_minutes, effort_level, start_after, category):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        UPDATE tasks
+        SET
+            title = ?,
+            due_date = ?,
+            priority = ?,
+            status = ?,
+            duration_minutes = ?,
+            effort_level = ?,
+            start_after = ?,
+            category = ?
+        WHERE task_id = ?
+    """, (
+        title,
+        due_date,
+        priority,
+        status,
+        duration_minutes,
+        effort_level,
+        start_after,
+        category,
+        task_id
+    ))
+
+    conn.commit()
+
+    cursor.execute("SELECT * FROM tasks WHERE task_id = ?", (task_id,))
+    task = cursor.fetchone()
+
+    conn.close()
+
+    return dict(task) if task else None
+
+
+def delete_task(task_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("DELETE FROM tasks WHERE task_id = ?", (task_id,))
+    conn.commit()
+
+    deleted = cursor.rowcount > 0
+
+    conn.close()
+    return deleted
+
+
+def format_time_range(start_dt, duration_minutes):
+    end_dt = start_dt + timedelta(minutes=duration_minutes)
+    return (
+        start_dt.strftime("%-I:%M %p"),
+        end_dt.strftime("%-I:%M %p")
+    )
+
+def balance_categories(tasks):
+    remaining = tasks[:]
+    balanced = []
+
+    while remaining:
+        if not balanced:
+            balanced.append(remaining.pop(0))
+            continue
+
+        last_category = balanced[-1]["category"]
+
+        swap_index = None
+        for i, task in enumerate(remaining):
+            if task["category"] != last_category:
+                swap_index = i
+                break
+
+        if swap_index is not None:
+            balanced.append(remaining.pop(swap_index))
+        else:
+            balanced.append(remaining.pop(0))
+
+    return balanced
+
+def parse_task_datetime(value):
+    try:
+        return datetime.strptime(value, "%Y-%m-%d %H:%M")
+    except (TypeError, ValueError):
+        return None
+
+
+def assign_times_for_day(tasks, day_date):
+    current_start = datetime.combine(day_date, time(9, 0))
+
+    for task in tasks:
+        duration_minutes = int(task["duration_minutes"]) if task.get("duration_minutes") else 60
+        start_time_str, end_time_str = format_time_range(current_start, duration_minutes)
+        task["scheduled_start"] = start_time_str
+        task["scheduled_end"] = end_time_str
+        current_start += timedelta(minutes=duration_minutes)
+
+    return tasks
+
+def generate_schedule(days=7, max_tasks_per_day=4):
+    tasks = get_all_tasks(sort_by="date")
+
+    # Ignore completed tasks
+    tasks = [t for t in tasks if t["status"] != "Completed"]
+
+    priority_order = {"High": 0, "Medium": 1, "Low": 2}
+    effort_order = {"High": 0, "Medium": 1, "Low": 2}
+
+    today = datetime.now().date()
+    end_date = today + timedelta(days=days)
+
+    filtered_tasks = []
+
+    for task in tasks:
+        task_due_dt = parse_task_datetime(task.get("due_date"))
+        if not task_due_dt:
+            continue
+
+        task_due = task_due_dt.date()
+
+        start_after_dt = parse_task_datetime(task.get("start_after"))
+        start_after_date = start_after_dt.date() if start_after_dt else today
+
+        # Only include tasks due within selected range
+        # and allowed to start within that range
+        if today <= task_due <= end_date and start_after_date <= end_date:
+            filtered_tasks.append(task)
+
+    # Sort by due date, priority, then effort
+    filtered_tasks.sort(
+        key=lambda t: (
+            t["due_date"],
+            priority_order.get(t["priority"], 99),
+            effort_order.get(t["effort_level"], 99)
+        )
+    )
+
+    grouped_schedule = {}
+    tasks_per_day = {}
+
+    for task in filtered_tasks:
+        start_after_dt = parse_task_datetime(task.get("start_after"))
+        earliest_day = max(today, start_after_dt.date()) if start_after_dt else today
+
+        assigned_day = None
+        current_day = earliest_day
+
+        while current_day <= end_date:
+            day_key = current_day.strftime("%Y-%m-%d")
+            count = tasks_per_day.get(day_key, 0)
+
+            if count < max_tasks_per_day:
+                assigned_day = current_day
+                break
+
+            current_day += timedelta(days=1)
+
+        # If no available day exists in the selected range, skip the task
+        if not assigned_day:
+            continue
+
+        day_key = assigned_day.strftime("%Y-%m-%d")
+
+        if day_key not in grouped_schedule:
+            grouped_schedule[day_key] = []
+
+        duration_minutes = int(task["duration_minutes"]) if task.get("duration_minutes") else 60
+
+        grouped_schedule[day_key].append({
+            "id": task["task_id"],
+            "title": task["title"],
+            "status": task["status"],
+            "due_date": task["due_date"],
+            "priority": task["priority"],
+            "duration_minutes": duration_minutes,
+            "effort_level": task["effort_level"],
+            "start_after": task["start_after"],
+            "category": task["category"]
+        })
+
+        tasks_per_day[day_key] = tasks_per_day.get(day_key, 0) + 1
+
+    # Final pass:
+    # 1. balance categories within each day
+    # 2. assign time ranges in final order
+    for day_key, day_tasks in grouped_schedule.items():
+        balanced_tasks = balance_categories(day_tasks)
+        day_date = datetime.strptime(day_key, "%Y-%m-%d").date()
+        grouped_schedule[day_key] = assign_times_for_day(balanced_tasks, day_date)
+
+    return grouped_schedule

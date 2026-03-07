@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard | Smart Task Planner</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="container">
+    <nav class="navbar">
+      <div class="brand">
+        <div class="momentum-icon"></div>
+        <h1 class="logo">Momentum</h1>
+      </div>
+    
+      <div class="nav-links">
+        <a href="dashboard.html">Dashboard</a>
+        <a href="tasks.html">Tasks</a>
+        <a href="schedule.html">Schedule</a>
+      </div>
+    </nav>
+
+    <section class="stat-grid">
+      <div class="stat-card">
+        <h3>Total Tasks</h3>
+        <p id="totalTasks">0</p>
+      </div>
+    
+      <div class="stat-card">
+        <h3>Pending Tasks</h3>
+        <p id="pendingTasks">0</p>
+      </div>
+    
+      <div class="stat-card">
+        <h3>Completed Tasks</h3>
+        <p id="completedTasks">0</p>
+      </div>
+    </section>
+
+    <section class="dashboard-grid">
+      <div class="card quick-actions-card">
+        <h2>Quick Actions</h2>
+        <div class="quick-actions">
+          <a class="action-link" href="tasks.html">Go to Task Manager</a>
+          <a class="action-link" href="schedule.html">Go to Schedule Planner</a>
+        </div>
+      </div>
+
+      <div class="card recent-tasks-card">
+        <h2>Recent Tasks</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Status</th>
+              <th>Due Date</th>
+              <th>Priority</th>
+            </tr>
+          </thead>
+          <tbody id="recentTasksBody">
+            <tr>
+              <td colspan="4">No tasks available.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="row">
+      <div class="card" style="flex: 1;">
+        <h3>Quick Actions</h3>
+        <p><a href="tasks.html">Go to Task Manager</a></p>
+        <p><a href="schedule.html">Go to Schedule Planner</a></p>
+      </div>
+
+      
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

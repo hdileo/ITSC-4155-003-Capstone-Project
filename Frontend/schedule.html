@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Schedule | Smart Task Planner</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="container">
+
+    <nav class="navbar">
+      <div class="brand">
+        <div class="momentum-icon"></div>
+        <h1 class="logo">Momentum</h1>
+      </div>
+    
+      <div class="nav-links">
+        <a href="dashboard.html">Dashboard</a>
+        <a href="tasks.html">Tasks</a>
+        <a href="schedule.html">Schedule</a>
+      </div>
+    </nav>
+
+    <section class="card">
+      <h2>Generate Schedule</h2>
+
+      <div class="row">
+        <div style="flex: 1;">
+          <label for="scheduleRange">Schedule Range</label>
+          <select id="scheduleRange">
+            <option value="7">1 Week</option>
+            <option value="14">2 Weeks</option>
+          </select>
+        </div>
+
+        <div style="flex: 1;">
+          <label for="maxTasksPerDay">Max Tasks Per Day</label>
+          <select id="maxTasksPerDay">
+            <option value="3">3</option>
+            <option value="4" selected>4</option>
+            <option value="5">5</option>
+          </select>
+        </div>
+
+        <div style="flex: 1;">
+          <label>&nbsp;</label>
+          <button id="generateScheduleBtn" type="button">Generate Schedule</button>
+        </div>
+      </div>
+
+      <p id="scheduleMessage" class="message"></p>
+    </section>
+
+    <section class="card">
+      <h2>Generated Schedule</h2>
+      <div id="scheduleOutput">
+        <p>No schedule generated yet.</p>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Conflict Alerts</h2>
+      <div id="conflictOutput">
+        <p>No conflicts detected.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
