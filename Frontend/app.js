@@ -963,6 +963,7 @@ function renderSchedule(schedule) {
   const grid = scheduleOutput.querySelector(".schedule-grid");
 
   let hasAnyTasks = false;
+  let hasConflict = false;
 
   for (let i = 0; i < selectedDays; i++) {
     const currentDate = new Date();
@@ -972,13 +973,9 @@ function renderSchedule(schedule) {
     const tasksForDay = schedule[dayKey] || [];
 
 	const conflicts = detectScheduleConflicts(tasksForDay);
-	  
-	const conflictOutput = document.getElementById("conflictOutput");
-	
-	if (conflicts.size > 0 && conflictOutput) {
-	  conflictOutput.innerHTML = "<p>⚠ Schedule conflict detected.</p>";
-	} else if (conflictOutput) {
-	  conflictOutput.innerHTML = "<p>No conflicts detected.</p>";
+
+	if (conflicts.size > 0) {
+	  hasConflict = true;
 	}
 
     const dayCard = document.createElement("div");
@@ -1061,6 +1058,16 @@ function renderSchedule(schedule) {
     scheduleMessage.textContent = "No tasks available to schedule.";
     scheduleMessage.className = "message error";
   }
+
+  const conflictOutput = document.getElementById("conflictOutput");
+
+  if (conflictOutput) {
+	  if (hasConflict) {
+	    conflictOutput.innerHTML = "<p>⚠ Schedule conflict detected.</p>";
+	  } else {
+	    conflictOutput.innerHTML = "<p>No conflicts detected.</p>";
+	  }
+	}
 }
 
 async function loadQuote() {
