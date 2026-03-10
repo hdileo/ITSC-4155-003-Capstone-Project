@@ -488,6 +488,24 @@ button {
 	box-shadow: 0 4px 10px rgba(15, 23, 42, 0.04);
 	transition: transform 0.15s ease, box-shadow 0.2s ease;
   }
+
+.conflict-task {
+  border: 2px solid var(--error);
+  background: #FEE2E2;
+  position: relative;
+}
+
+.conflict-label {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: var(--error);
+  color: white;
+  font-size: 0.7rem;
+  padding: 3px 6px;
+  border-radius: 6px;
+  font-weight: 700;
+}
   
   .schedule-task:hover {
 	transform: translateY(-1px);
