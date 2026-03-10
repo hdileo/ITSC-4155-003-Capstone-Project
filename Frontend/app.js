@@ -101,6 +101,28 @@ function formatLocalDateKey(date) {
   return `${year}-${month}-${day}`;
 }
 
+function detectScheduleConflicts(tasks) {
+  const conflicts = new Set();
+
+  for (let i = 0; i < tasks.length; i++) {
+    for (let j = i + 1; j < tasks.length; j++) {
+
+      const startA = new Date(tasks[i].scheduled_start);
+      const endA = new Date(tasks[i].scheduled_end);
+
+      const startB = new Date(tasks[j].scheduled_start);
+      const endB = new Date(tasks[j].scheduled_end);
+
+      if (startA < endB && endA > startB) {
+        conflicts.add(tasks[i].id);
+        conflicts.add(tasks[j].id);
+      }
+    }
+  }
+
+  return conflicts;
+}
+
 
 
 /*
