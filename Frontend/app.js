@@ -1013,9 +1013,20 @@ function renderSchedule(schedule) {
       if (task.priority === "High") priorityClass = "priority-high";
       if (task.priority === "Medium") priorityClass = "priority-medium";
 
-      const taskCard = document.createElement("div");
-      taskCard.className = "schedule-task";
+    const taskCard = document.createElement("div");
+	taskCard.className = "schedule-task";
+	
+	if (conflicts.has(task.id)) {
+		taskCard.classList.add("conflict-task");
+		
+		  const label = document.createElement("div");
+		  label.className = "conflict-label";
+		  label.textContent = "CONFLICT";
+		
+		  taskCard.appendChild(label);
+		}
 
+		
       taskCard.innerHTML = `
         <div class="calendar-task-time">${task.scheduled_start} – ${task.scheduled_end}</div>
         <div class="calendar-task-title">${task.title}</div>
