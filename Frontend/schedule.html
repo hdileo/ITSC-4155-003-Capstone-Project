@@ -2,91 +2,146 @@
 <html lang="en">
 <head>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Schedule | Smart Task Planner</title>
+  <title>Schedule | Momentum</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
-<body>
-  <main class="container">
+<body class="app-page">
+  <div class="app-shell">
+    <header class="app-navbar">
+      <div class="app-navbar-inner">
+        <a href="index.html" class="brand brand-link">
+          <div class="momentum-icon"></div>
+          <span class="logo">Momentum</span>
+        </a>
 
-    <nav class="navbar">
-      <div class="brand">
-        <div class="momentum-icon"></div>
-        <h1 class="logo">Momentum</h1>
-      </div>
-    
-      <div class="nav-links">
-        <a href="dashboard.html">Dashboard</a>
-        <a href="tasks.html">Tasks</a>
-        <a href="schedule.html">Schedule</a>
-      </div>
-    </nav>
+        <nav class="app-nav-links">
+          <a href="dashboard.html">Dashboard</a>
+          <a href="tasks.html">Tasks</a>
+          <a href="schedule.html" class="active">Schedule</a>
+        </nav>
 
-    <section class="card">
-      <h2>Schedule Capacity</h2>
-      <div class="game-progress-wrap">
-        <div class="game-progress-bar">
-          <div id="scheduleLoadFill" class="game-progress-fill"></div>
-        </div>
-        <div class="game-progress-meta">
-          <span id="scheduleLoadPercent">0%</span>
-          <span id="scheduleLoadText">0 / 0 slots used</span>
+        <div class="app-nav-actions">
+          <a href="index.html" class="app-nav-btn secondary">Home</a>
         </div>
       </div>
-    </section>
+    </header>
 
-    <section class="card">
-      <h2>Generate Schedule</h2>
+    <main class="schedule-page">
+      <section class="dashboard-hero">
+        <div>
+          <p class="dashboard-eyebrow">Planning Engine</p>
+          <h1>Schedule Planner</h1>
+          <p class="dashboard-subtitle">
+            Generate your schedule, review task distribution, and spot conflicts before they slow you down.
+          </p>
+        </div>
+      </section>
 
-      <div class="row">
-        <div style="flex: 1;">
-          <label for="scheduleRange">Schedule Range</label>
-          <select id="scheduleRange">
-            <option value="7">1 Week</option>
-            <option value="14">2 Weeks</option>
-          </select>
+      <section class="dashboard-panel">
+        <div class="panel-header">
+          <div>
+            <p class="panel-eyebrow">Capacity</p>
+            <h2>Schedule Capacity</h2>
+          </div>
         </div>
 
-        <label for="maxTasksPerDay">Max Tasks Per Day</label>
-          <select id="maxTasksPerDay">
-           <option value="1">1</option>
-           <option value="2">2</option>
-          <option value="3">3</option>
-          <option value="4" selected>4</option>
-          <option value="5">5</option>
-          </select>
-
-        <div style="flex: 1;">
-          <label>&nbsp;</label>
-          <button id="generateScheduleBtn" type="button">Generate Schedule</button>
+        <div class="game-progress-wrap">
+          <div class="game-progress-bar">
+            <div id="scheduleLoadFill" class="game-progress-fill"></div>
+          </div>
+          <div class="game-progress-meta">
+            <span id="scheduleLoadPercent">0%</span>
+            <span id="scheduleLoadText">0 / 0 slots used</span>
+          </div>
         </div>
-      </div>
+      </section>
 
-      <p id="scheduleMessage" class="message"></p>
-    </section>
+      <section class="schedule-layout">
+        <section class="dashboard-panel schedule-controls-panel">
+          <div class="panel-header">
+            <div>
+              <p class="panel-eyebrow">Generate</p>
+              <h2>Build Schedule</h2>
+            </div>
+          </div>
 
-    <section class="card">
-      <h2>Generated Schedule</h2>
-      <div id="scheduleOutput">
-        <p>No scheduled tasks available.</p>
-      </div>
-    </section>
-    <section class="card">
-      <h2>Momentum Intelligence</h2>
-      <p id="scheduleSummary">Generate a schedule to see smart insights.</p>
-    </section>
+          <div class="schedule-controls">
+            <div class="control-group">
+              <label for="scheduleRange">Schedule Range</label>
+              <div class="select-wrap">
+                <select id="scheduleRange">
+                  <option value="7">1 Week</option>
+                  <option value="14">2 Weeks</option>
+                </select>
+              </div>
+            </div>
 
-    <section class="card">
-      <h2>Conflict Alerts</h2>
-      <div id="conflictOutput">
-        <p>No conflicts detected.</p>
-      </div>
-    </section>
+            <div class="control-group">
+              <label for="maxTasksPerDay">Max Tasks Per Day</label>
+              <div class="select-wrap">
+                <select id="maxTasksPerDay">
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="4" selected>4</option>
+                  <option value="5">5</option>
+                </select>
+              </div>
+            </div>
+          </div>
 
-  </main>
+          <button id="generateScheduleBtn" class="generate-btn" type="button">
+            Generate Schedule
+          </button>
+
+          <p id="scheduleMessage" class="message"></p>
+        </section>
+
+        <section class="schedule-side-column">
+          <article class="dashboard-panel">
+            <div class="panel-header">
+              <div>
+                <p class="panel-eyebrow">Intelligence</p>
+                <h2>Momentum Intelligence</h2>
+              </div>
+            </div>
+            <p id="scheduleSummary" class="schedule-summary-text">
+              Generate a schedule to see smart insights.
+            </p>
+          </article>
+
+          <article class="dashboard-panel">
+            <div class="panel-header">
+              <div>
+                <p class="panel-eyebrow">Conflicts</p>
+                <h2>Conflict Alerts</h2>
+              </div>
+            </div>
+            <div id="conflictOutput" class="conflict-output-wrap">
+              <p>No conflicts detected.</p>
+            </div>
+          </article>
+        </section>
+      </section>
+
+      <section class="dashboard-panel generated-schedule-panel">
+        <div class="panel-header">
+          <div>
+            <p class="panel-eyebrow">Output</p>
+            <h2>Generated Schedule</h2>
+          </div>
+        </div>
+
+        <div id="scheduleOutput" class="schedule-output-wrap">
+          <p>No scheduled tasks available.</p>
+        </div>
+      </section>
+    </main>
+  </div>
 
   <script src="app.js"></script>
 </body>

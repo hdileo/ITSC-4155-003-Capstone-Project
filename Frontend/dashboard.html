@@ -2,108 +2,148 @@
 <html lang="en">
 <head>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Dashboard | Smart Task Planner</title>
+  <title>Dashboard | Momentum</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
-<body>
+<body class="app-page">
+  <div class="app-shell">
+    <header class="app-navbar">
+      <div class="app-navbar-inner">
+        <a href="index.html" class="brand brand-link">
+          <div class="momentum-icon"></div>
+          <span class="logo">Momentum</span>
+        </a>
 
-  
+        <nav class="app-nav-links">
+          <a href="dashboard.html" class="active">Dashboard</a>
+          <a href="tasks.html">Tasks</a>
+          <a href="schedule.html">Schedule</a>
+        </nav>
 
-
-  <main class="container">
-    <nav class="navbar">
-      <div class="brand">
-        <div class="momentum-icon"></div>
-        <h1 class="logo">Momentum</h1>
-      </div>
-    
-      <div class="nav-links">
-        <a href="dashboard.html">Dashboard</a>
-        <a href="tasks.html">Tasks</a>
-        <a href="schedule.html">Schedule</a>
-      </div>
-    </nav>
-
-    <div class="quote-card">
-      <h3>Momentum Quote</h3>
-      <p id="dailyQuote">Loading inspiration...</p>
-    </div>
-
-    <section class="stat-grid">
-      <div class="stat-card">
-        <h3>Total Tasks</h3>
-        <p id="totalTasks">0</p>
-      </div>
-    
-      <div class="stat-card">
-        <h3>Pending Tasks</h3>
-        <p id="pendingTasks">0</p>
-      </div>
-    
-      <div class="stat-card">
-        <h3>Completed Tasks</h3>
-        <p id="completedTasks">0</p>
-      </div>
-    </section>
-
-    <section class="dashboard-grid">
-      <div class="card quick-actions-card">
-        <h2>Quick Actions</h2>
-        <div class="quick-actions">
-          <a class="action-link" href="tasks.html">Go to Task Manager</a>
-          <a class="action-link" href="schedule.html">Go to Schedule Planner</a>
+        <div class="app-nav-actions">
+          <a href="index.html" class="app-nav-btn secondary">Home</a>
         </div>
       </div>
+    </header>
 
-      <div class="card recent-tasks-card">
-        <h2>Recent Tasks</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Title</th>
-              <th>Status</th>
-              <th>Due Date</th>
-              <th>Priority</th>
-            </tr>
-          </thead>
-          <tbody id="recentTasksBody">
-            <tr>
-              <td colspan="4">No tasks available.</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-
-    </section>
-    <section class="card">
-      <h2>Mission Progress</h2>
-      <div class="game-progress-wrap">
-        <div class="game-progress-bar">
-          <div id="progressFill" class="game-progress-fill"></div>
+    <main class="dashboard-page">
+      <section class="dashboard-hero">
+        <div>
+          <p class="dashboard-eyebrow">Workspace</p>
+          <h1>Momentum Dashboard</h1>
+          <p class="dashboard-subtitle">
+            Track progress, review your latest tasks, and keep your week moving forward.
+          </p>
         </div>
-        <div class="game-progress-meta">
-          <span id="progressPercent">0%</span>
-          <span id="progressText">0 / 0 tasks completed</span>
+      </section>
+
+      <section class="dashboard-stat-grid">
+        <article class="dashboard-stat-card">
+          <div class="stat-label">Total Tasks</div>
+          <div class="stat-value" id="totalTasks">0</div>
+          <div class="stat-foot">All tracked work</div>
+        </article>
+
+        <article class="dashboard-stat-card">
+          <div class="stat-label">Pending Tasks</div>
+          <div class="stat-value" id="pendingTasks">0</div>
+          <div class="stat-foot">Still in progress</div>
+        </article>
+
+        <article class="dashboard-stat-card">
+          <div class="stat-label">Completed Tasks</div>
+          <div class="stat-value" id="completedTasks">0</div>
+          <div class="stat-foot">Finished successfully</div>
+        </article>
+      </section>
+
+      <section class="dashboard-main-grid">
+        <section class="dashboard-panel dashboard-panel-large">
+          <div class="panel-header">
+            <div>
+              <p class="panel-eyebrow">Overview</p>
+              <h2>Recent Tasks</h2>
+            </div>
+          </div>
+
+          <div class="recent-tasks-wrap">
+            <table class="dashboard-table">
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Status</th>
+                  <th>Due Date</th>
+                  <th>Priority</th>
+                </tr>
+              </thead>
+              <tbody id="recentTasksBody">
+                <tr>
+                  <td colspan="4">No tasks available.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="dashboard-side-column">
+          <article class="dashboard-panel">
+            <div class="panel-header">
+              <div>
+                <p class="panel-eyebrow">Action</p>
+                <h2>Quick Actions</h2>
+              </div>
+            </div>
+
+            <div class="dashboard-action-grid">
+              <a class="dashboard-action-card" href="tasks.html">
+                <span class="action-title">Task Manager</span>
+                <span class="action-desc">Create, edit, and organize your tasks.</span>
+              </a>
+
+              <a class="dashboard-action-card" href="schedule.html">
+                <span class="action-title">Schedule Planner</span>
+                <span class="action-desc">Generate and review your weekly schedule.</span>
+              </a>
+            </div>
+          </article>
+
+          <article class="dashboard-panel quote-panel">
+            <div class="panel-header">
+              <div>
+                <p class="panel-eyebrow">Focus</p>
+                <h2>Momentum Quote</h2>
+              </div>
+            </div>
+
+            <p id="dailyQuote" class="dashboard-quote">Loading inspiration...</p>
+          </article>
+        </section>
+      </section>
+
+      <section class="dashboard-panel progress-panel">
+        <div class="panel-header">
+          <div>
+            <p class="panel-eyebrow">Progress</p>
+            <h2>Mission Progress</h2>
+          </div>
         </div>
-      </div>
-    </section>
 
-    <section class="row">
-      <div class="card" style="flex: 1;">
-        <h3>Quick Actions</h3>
-        <p><a href="tasks.html">Go to Task Manager</a></p>
-        <p><a href="schedule.html">Go to Schedule Planner</a></p>
-      </div>
-
-      
-    </section>
-  </main>
+        <div class="game-progress-wrap">
+          <div class="game-progress-bar">
+            <div id="progressFill" class="game-progress-fill"></div>
+          </div>
+          <div class="game-progress-meta">
+            <span id="progressPercent">0%</span>
+            <span id="progressText">0 / 0 tasks completed</span>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
 
   <script src="app.js"></script>
 </body>

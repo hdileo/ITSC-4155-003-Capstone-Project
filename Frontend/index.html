@@ -3,72 +3,306 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Momentum | Welcome</title>
+  <title>Momentum | Build Better Momentum</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
 </head>
-<body class="auth-page">
-  <div class="auth-shell">
-    <header class="auth-topbar">
-      <div class="brand">
-        <div class="momentum-icon"></div>
-        <h1 class="logo">Momentum</h1>
+<body class="landing-page">
+  <div class="landing-shell">
+    <header class="landing-navbar-wrap">
+      <div class="landing-navbar">
+    
+        <a href="index.html" class="brand brand-link">
+          <div class="momentum-icon"></div>
+          <span class="logo">Momentum</span>
+        </a>
+    
+        <nav class="navbar-links">
+          <a href="#features">Features</a>
+          <a href="#demo">Demo</a>
+          <a href="#reviews">Reviews</a>
+        </nav>
+    
+        <div class="navbar-actions">
+          <a href="dashboard.html" class="navbar-login-btn">Log in</a>
+          <a href="dashboard.html" class="navbar-cta-btn">Open App</a>
+        </div>
+    
       </div>
-
-      <nav class="auth-nav">
-        <a href="#">Login</a>
-        <a href="#">Sign Up</a>
-      </nav>
     </header>
 
-    <main class="auth-layout">
-      <section class="auth-card">
-        <h2>Welcome Back</h2>
-        <p class="auth-subtext">Plan smarter. Move faster.</p>
+    <main class="landing-hero">
+      <section class="landing-copy">
+        <div class="hero-badge">Smart task planning for students and builders</div>
 
-        <form id="fakeLoginForm" class="auth-form">
-          <label>
-            Email
-            <input type="email" placeholder="you@example.com" />
-          </label>
+        <h2>
+          Build Better
+          <span>Momentum</span>
+        </h2>
 
-          <label>
-            Password
-            <input type="password" placeholder="Enter your password" />
-          </label>
-
-          <button type="submit" class="auth-submit-btn">Login</button>
-        </form>
-
-        <p class="auth-footer-text">
-          Don’t have an account yet? <a href="#">Sign up</a>
+        <p>
+          Organize tasks, generate schedules, and stay focused with a clean,
+          intelligent planner built for steady progress.
         </p>
+
+        <div class="hero-actions">
+          <a href="dashboard.html" class="btn-primary">Get Started</a>
+          <a href="tasks.html" class="btn-secondary">View Tasks</a>
+        </div>
       </section>
 
-      <section class="auth-hero">
-        <div class="auth-hero-glow"></div>
-        <div class="auth-hero-content">
-          <div class="hero-icon-wrap">
-            <div class="momentum-icon auth-big-icon"></div>
+      <section class="hero-visual">
+        <div class="floating-task task-1">
+          <span class="task-dot high"></span>
+          Essay Draft • High Priority
+        </div>
+
+        <div class="floating-task task-2">
+          <span class="task-dot medium"></span>
+          Study Biology • 90 min
+        </div>
+
+        <div class="floating-task task-3">
+          <span class="task-dot completed"></span>
+          Gym Workout • Completed
+        </div>
+
+        <div class="floating-task task-4">
+          <span class="task-dot overdue"></span>
+          Quiz Review • Overdue
+        </div>
+
+        <div class="floating-task task-5">
+          <span class="task-dot medium"></span>
+          Club Meeting • Wednesday
+        </div>
+
+        <div class="floating-task task-6">
+          <span class="task-dot high"></span>
+          LeetCode Practice • Today
+        </div>
+
+        <div class="planner-mockup">
+          <div class="planner-topbar">
+            <div class="planner-window-controls">
+              <span></span><span></span><span></span>
+            </div>
+            <div class="planner-title">Momentum Planner</div>
           </div>
-          <h2>Build Better Momentum</h2>
-          <p>
-            Organize tasks, generate schedules, and stay focused with a clean,
-            intelligent planner built for steady progress.
-          </p>
+
+          <div class="planner-body">
+            <aside class="planner-sidebar">
+              <h3>Today</h3>
+              <div class="sidebar-pill active">School</div>
+              <div class="sidebar-pill">Health</div>
+              <div class="sidebar-pill">Personal</div>
+              <div class="sidebar-pill">Social</div>
+            </aside>
+
+            <section class="planner-calendar">
+              <div class="calendar-header">
+                <div>Mon</div>
+                <div>Tue</div>
+                <div>Wed</div>
+                <div>Thu</div>
+                <div>Fri</div>
+              </div>
+
+              <div class="calendar-grid">
+                <div class="calendar-block purple" style="grid-column: 1; grid-row: 1 / span 2;">
+                  Math Homework
+                  <span>8:00–9:00</span>
+                </div>
+
+                <div class="calendar-block blue" style="grid-column: 2; grid-row: 2 / span 3;">
+                  Study Session
+                  <span>9:00–10:30</span>
+                </div>
+
+                <div class="calendar-block green" style="grid-column: 3; grid-row: 1 / span 2;">
+                  Gym
+                  <span>8:00–9:00</span>
+                </div>
+
+                <div class="calendar-block pink" style="grid-column: 4; grid-row: 3 / span 2;">
+                  Essay Draft
+                  <span>10:00–11:00</span>
+                </div>
+
+                <div class="calendar-block purple" style="grid-column: 5; grid-row: 2 / span 2;">
+                  Project Review
+                  <span>9:30–10:30</span>
+                </div>
+              </div>
+            </section>
+          </div>
         </div>
       </section>
     </main>
+
+    <section class="features-showcase">
+      <div class="features-header">
+        <h2>The Productivity System for Steady Progress</h2>
+        <p>
+          Tasks, scheduling, focus, and momentum tracking in one clean workflow.
+        </p>
+      </div>
+
+      <div class="features-grid">
+        <article class="feature-card feature-card-1">
+          <h3><span>Smart Task Manager</span></h3>
+          <div class="feature-mockup task-manager-mockup float-card">
+            <div class="mock-window-bar">
+              <span></span><span></span><span></span>
+            </div>
+            <div class="task-list">
+              <div class="task-row done">
+                <div class="task-check"></div>
+                <div>
+                  <strong>Gym Workout</strong>
+                  <span>Completed • Health</span>
+                </div>
+              </div>
+              <div class="task-row">
+                <div class="task-check"></div>
+                <div>
+                  <strong>Essay Draft</strong>
+                  <span>High Priority • 60 min</span>
+                </div>
+              </div>
+              <div class="task-row">
+                <div class="task-check"></div>
+                <div>
+                  <strong>Study Biology</strong>
+                  <span>Medium Effort • School</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="feature-card feature-card-2">
+          <h3><span>Schedule Generation</span></h3>
+          <div class="feature-mockup schedule-mockup float-card delay-1">
+            <div class="schedule-days">
+              <div class="schedule-col">
+                <h4>Mon</h4>
+                <div class="time-block purple">Math Homework<span>8:00–9:00</span></div>
+              </div>
+              <div class="schedule-col">
+                <h4>Tue</h4>
+                <div class="time-block blue tall">Study Session<span>9:00–10:30</span></div>
+              </div>
+              <div class="schedule-col">
+                <h4>Wed</h4>
+                <div class="time-block green">Gym<span>8:00–9:00</span></div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="feature-card feature-card-3">
+          <h3><span>Priority + Effort Planning</span></h3>
+          <div class="feature-mockup priority-mockup float-card delay-2">
+            <div class="priority-chip high">High Priority</div>
+            <div class="priority-chip medium">Medium Effort</div>
+            <div class="priority-chip duration">90 min Block</div>
+            <div class="priority-panel">
+              <strong>Essay Draft</strong>
+              <p>Scheduled earlier because of higher effort and priority.</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="feature-card feature-card-4">
+          <h3><span>Conflict Awareness</span></h3>
+          <div class="feature-mockup conflict-mockup float-card delay-3">
+            <div class="conflict-alert">Schedule conflict detected</div>
+            <div class="conflict-box">
+              <div class="conflict-task red">2:00–3:00 • Task A</div>
+              <div class="conflict-task orange">2:30–3:30 • Task B</div>
+            </div>
+            <div class="conflict-note">Suggested next slot: after 3:30 PM</div>
+          </div>
+        </article>
+      </div>
+    </section>
+    <section class="social-proof-section">
+      <div class="social-proof-header">
+        <h2>See Momentum in Action</h2>
+        <p>
+          Built to help students stay organized, reduce overload, and make steady progress every week.
+        </p>
+      </div>
+    
+      <div class="demo-video-card">
+        <div class="demo-video-placeholder">
+          <button class="demo-play-btn" type="button" aria-label="Play Momentum demo">
+            ▶
+          </button>
+    
+          <div class="demo-video-overlay">
+            <div class="demo-video-badge">Momentum Demo</div>
+            <h3>Watch how Momentum turns scattered tasks into a clear weekly plan.</h3>
+            <p>Drop your real demo video here later.</p>
+          </div>
+        </div>
+      </div>
+    
+      <div class="testimonial-grid">
+        <article class="testimonial-card">
+          <div class="testimonial-avatar">M</div>
+          <h4>Math Student</h4>
+          <p>
+            “I was able to organize 10 assignments in one place and finally see what I needed to finish first.”
+          </p>
+        </article>
+    
+        <article class="testimonial-card">
+          <div class="testimonial-avatar">B</div>
+          <h4>Busy Freshman</h4>
+          <p>
+            “Momentum helped me break up long study sessions into blocks that actually felt manageable.”
+          </p>
+        </article>
+    
+        <article class="testimonial-card">
+          <div class="testimonial-avatar">C</div>
+          <h4>Computer Science Student</h4>
+          <p>
+            “I could balance homework, coding practice, and meetings without feeling like everything was colliding.”
+          </p>
+        </article>
+      </div>
+    
+      <div class="momentum-surprise-card">
+        <div class="surprise-glow"></div>
+        <div class="surprise-copy">
+          <span class="surprise-tag">Momentum Insight</span>
+          <h3>Your week looks better when your tasks stop competing with each other.</h3>
+          <p>
+            Smart scheduling, duration-based planning, and conflict awareness help turn stress into structure.
+          </p>
+        </div>
+    
+        <div class="surprise-stats">
+          <div class="surprise-stat">
+            <strong>10+</strong>
+            <span>tasks organized</span>
+          </div>
+          <div class="surprise-stat">
+            <strong>90 min</strong>
+            <span>study block handled</span>
+          </div>
+          <div class="surprise-stat">
+            <strong>0 overlaps</strong>
+            <span>with conflict detection</span>
+          </div>
+        </div>
+      </div>
+    </section>
   </div>
-
-  <script>
-    const fakeLoginForm = document.getElementById("fakeLoginForm");
-
-    if (fakeLoginForm) {
-      fakeLoginForm.addEventListener("submit", (e) => {
-        e.preventDefault();
-        window.location.href = "dashboard.html";
-      });
-    }
-  </script>
 </body>
 </html>

@@ -1,9 +1,164 @@
+/*
+========================================================
+USER STORY → FUNCTION MAPPING (Momentum Project)
+========================================================
+
+-------------------------------
+TASK MANAGEMENT
+-------------------------------
+
+User Story: Create Task
+- Handles creating a new task with validation
+→ form submit event listener
+→ validateFutureDate()
+→ formatForBackend()
+
+User Story: View Tasks (Task Log)
+- Displays all tasks in table format
+→ fetchTasks()
+→ renderTasks()
+
+User Story: Edit Task
+- Allows updating existing tasks
+→ openEditForm()
+→ editForm submit event listener
+→ highlightUpdatedFields()
+→ closeEditForm()
+
+User Story: Delete Task
+- Removes a task from the system
+→ handleDeleteTask()
+
+User Story: Complete Task
+- Marks task as completed and allows undo
+→ markTaskComplete()
+→ undoCompleteTask()
+
+User Story: Sort Tasks
+- Sort tasks by selected criteria
+→ sortSelect change listener
+→ fetchTasks()
+
+
+-------------------------------
+VALIDATION + UTILITIES
+-------------------------------
+
+User Story: Date Validation
+- Ensures valid and future due dates
+→ parseDateInput()
+→ validateFutureDate()
+
+User Story: Backend Formatting
+- Converts frontend datetime format to backend format
+→ formatForBackend()
+
+User Story: UI Messaging
+- Handles temporary success/error messages
+→ clearCreateMessageAfterDelay()
+→ clearEditMessageAfterDelay()
+
+
+-------------------------------
+SCHEDULE SYSTEM
+-------------------------------
+
+User Story: Generate Schedule
+- Generates schedule based on constraints
+→ handleGenerateSchedule()
+
+User Story: View Schedule (Calendar)
+- Displays schedule in calendar format
+→ renderSchedule()
+
+User Story: Refresh Schedule
+- Re-fetch and update schedule view
+→ refreshScheduleView()
+
+User Story: Schedule Load Indicator
+- Shows how full the schedule is
+→ updateScheduleLoad()
+
+User Story: Schedule Insights (AI Summary)
+- Provides human-readable schedule explanation
+→ generateScheduleSummary()
+
+User Story: Save Schedule Preferences
+- Persists schedule settings locally
+→ loadSavedScheduleSettings()
+→ localStorage usage in handleGenerateSchedule()
+
+User Story: Load Saved Schedule
+- Loads previously saved schedule on refresh
+→ loadSavedSchedule()
+
+
+-------------------------------
+SCHEDULE CONFLICT DETECTION
+-------------------------------
+
+User Story: Detect Conflicts
+- Detect overlapping scheduled tasks
+→ parseTimeToMinutes()
+→ findScheduleConflicts()
+→ detectAllScheduleConflicts()
+
+User Story: Display Conflict Alerts
+- Shows conflicts in UI and highlights tasks
+→ renderConflictAlerts()
+→ renderSchedule() (conflict styling)
+
+
+-------------------------------
+DASHBOARD
+-------------------------------
+
+User Story: View Dashboard Metrics
+- Shows totals, progress, and recent tasks
+→ loadDashboard()
+
+User Story: Progress Tracking
+- Displays completion percentage visually
+→ loadDashboard() (progressFill, progressPercent)
+
+
+-------------------------------
+EXTRA FEATURES / UX
+-------------------------------
+
+User Story: Daily Motivation Quote
+- Displays a motivational quote
+→ loadQuote()
+
+User Story: Intro Overlay
+- Displays intro screen on first load
+→ closeIntroOverlay()
+→ introContinueBtn listener
+
+User Story: Interactive Visual (Momentum Orb)
+- 3D animated UI element
+→ initMomentumOrb()
+
+
+========================================================
+ARCHITECTURE NOTE
+========================================================
+- API Layer: fetchTasks(), handleGenerateSchedule(), loadDashboard()
+- Rendering Layer: renderTasks(), renderSchedule()
+- Logic Layer: conflict detection, validation, schedule calculations
+- UI Layer: messages, highlights, animations
+
+========================================================
+*/
+
+
+// --- Task Creation Elements ---
 const form = document.getElementById("taskForm");
 const msg = document.getElementById("message");
 const tbody = document.getElementById("taskTableBody");
 const sortSelect = document.getElementById("sortSelect");
 
-//This is what Connects to Our HTML( Edit, Schedule,etc..) -- All the functions in this JS file, the functions in this file.
+// --- Task Editing Elements ---
 const editSection = document.getElementById("editTaskSection");
 const editForm = document.getElementById("editTaskForm");
 const editTaskId = document.getElementById("editTaskId");
@@ -18,15 +173,34 @@ const editDurationMinutes = document.getElementById("editDurationMinutes");
 const editEffortLevel = document.getElementById("editEffortLevel");
 const editStartAfter = document.getElementById("editStartAfter");
 const editCategory = document.getElementById("editCategory");
+
+// --- Schedule / Intelligence Elements ---
 const scheduleLoadFill = document.getElementById("scheduleLoadFill");
 const scheduleLoadPercent = document.getElementById("scheduleLoadPercent");
 const scheduleLoadText = document.getElementById("scheduleLoadText");
 const scheduleSummary = document.getElementById("scheduleSummary");
+// --- Intro / Landing Elements ---
 const introOverlay = document.getElementById("introOverlay");
 const introContinueBtn = document.getElementById("introContinueBtn");
 
-// Store original task values so we can compare after edit
+
+/* ========================================================
+   SECTION: Shared State
+   Purpose: Store temporary values used across actions.
+======================================================== */
+
+
+
+
 let originalTaskData = null;
+
+
+
+/* ========================================================
+   SECTION: Utility Functions
+   Purpose: Small reusable helpers for formatting dates,
+   times, and keys used by tasks and schedules.
+======================================================== */
 
 //Method which formats our Backend Data into the Format Which we See On Our Schedule and Task List 
 function formatForBackend(datetimeLocalValue) {
@@ -35,51 +209,6 @@ function formatForBackend(datetimeLocalValue) {
     : datetimeLocalValue;
 }
 
-/* 
-
-Feature: Date Parsing and Future Date Validation
-
-Purpose
-
-Handles task due date validation by converting user input into a JavaScript Date object and ensuring the selected date is valid and in the future before allowing a task to be created or updated.
-
-Function #1: parseDateInput()
-
-Purpose:
-Converts a date string from a form input into a usable JavaScript Date object.
-
-What it handles:
-	•	Supports HTML datetime-local inputs (format includes "T")
-	•	Extracts year, month, day, hour, and minute
-	•	Returns a properly formatted Date object
-	•	Returns null if no value is provided
-
-
-
-Function: validateFutureDate()
-
-Purpose:
-Ensures that the user selects a valid due date that is in the future before submitting a task.
-
-Validation Checks
-	1.	Ensures the field is not empty
-	2.	Ensures the date format is valid
-	3.	Ensures the selected date is later than the current time
-
-User Feedback
-If validation fails, an inline error message is shown next to the input field.
-
-Possible Messages
-	•	"Required"
-	•	"Invalid date"
-	•	"Due date must be in the future."
-
-
-
-
-
-
-*/
 
 
 
@@ -127,23 +256,11 @@ function detectScheduleConflicts(tasks) {
 
 
 
-/*
-========================================================
-User Story #59 – Overdue Task Highlighting
-
-As a user, I want overdue tasks to be visually highlighted
-so that I can easily identify tasks that require immediate attention.
-
-Implementation:
-This logic checks task due dates when rendering tasks.
-If a task's due date is earlier than the current date and
-the task is not completed, a visual highlight is applied
-to the task row.
-
-UI Result:
-Overdue tasks appear visually distinct in the Task Log.
-========================================================
-*/
+/* ========================================================
+   SECTION: Validation
+   Purpose: Validate required task inputs before creating
+   or editing a task.
+======================================================== */
 
 
 
@@ -171,41 +288,13 @@ function validateFutureDate(inputValue, inlineMsgEl) {
   return true;
 }
 
-/* 
-
-Purpose
-
-Handles temporary success and error messages shown to the user after actions such as creating or editing tasks. Messages automatically disappear after a short delay to keep the interface clean.
-
-⸻
-
-Function: clearCreateMessageAfterDelay()
-
-Purpose
-
-Automatically clears the task creation message after a specified amount of time.
-
-How It Works
-	•	Uses setTimeout() to wait a specified number of milliseconds.
-	•	After the delay:
-	•	The message text is cleared.
-	•	The message styling is reset to the default "message" class.
+/* ========================================================
+   SECTION: UI Feedback Helpers
+   Purpose: Clear temporary success and error messages after
+   task creation or editing actions.
+======================================================== */
 
 
-Function: clearEditMessageAfterDelay()
-
-Purpose
-
-Automatically clears the task editing message after a short delay.
-
-How It Works
-	•	Uses setTimeout() to wait 5 seconds.
-	•	Clears the edit message text and resets the message styling.
-
-Example Use Case
-
-
-*/ 
 
 function clearCreateMessageAfterDelay(delay = 5000) {
   setTimeout(() => {
@@ -220,8 +309,22 @@ function clearEditMessageAfterDelay() {
     editMessage.className = "message";
   }, 5000);
 }
+/* ========================================================
+   SECTION: Task Data Loading and Rendering
+   Purpose: Fetch tasks from the backend and render them
+   into the Task Log table.
+======================================================== */
 
-// ---------- Fetch + Render ----------
+
+
+
+
+
+/*
+Purpose:
+Load tasks from the backend API, optionally applying the
+selected sort option, then render them in the Task Log.
+*/
 async function fetchTasks() {
   if (!tbody || !sortSelect) return;
   try {
@@ -247,37 +350,15 @@ async function fetchTasks() {
 }
 
 
+
+
+
+
 /*
-========================================================
-Feature: AI Schedule Insights / Schedule Summary
-
 Purpose:
-This function analyzes the generated schedule and produces a short,
-human-readable summary explaining scheduling decisions.
-
-What it evaluates:
-- Total number of scheduled tasks
-- Number of days used in the schedule
-- Number of high priority tasks
-- Number of high effort tasks
-- Busiest day workload
-
-Based on these metrics, the system generates insights such as:
-- prioritizing urgent tasks
-- scheduling high effort tasks earlier
-- spreading workload across days
-- identifying heavy workload days
-
-Result:
-A short summary is displayed in the UI to help the user understand
-their generated schedule.
-========================================================
+Render task rows into the Task Log table, including status,
+priority, meta pills, and action buttons.
 */
-
-
-
-
-
 function generateScheduleSummary(schedule) {
   if (!scheduleSummary) return;
 
@@ -328,6 +409,11 @@ function generateScheduleSummary(schedule) {
 }
 
 
+/*
+Purpose:
+Render task rows into the Task Log table, including status,
+priority, meta pills, and action buttons.
+*/
 
 function renderTasks(tasks) {
   tbody.innerHTML = "";
@@ -404,27 +490,11 @@ function renderTasks(tasks) {
 
 
 
-/*
-========================================================
-Feature: Task Completion System
-
-User Story:
-
-
-Description:
-This function updates a task's status to "Completed" by sending
-a PUT request to the backend API. After completion:
-
-1. The task is updated in the database.
-2. The task list refreshes to reflect the new status.
-3. Dashboard statistics are updated.
-4. A success message appears with an option to undo the action.
-
-If the user clicks "Undo", the system restores the task to its
-previous status.
-========================================================
-*/
-
+/* ========================================================
+   SECTION: Task Completion Workflow
+   Purpose: Mark tasks as completed, support undo, and keep
+   the task list, dashboard, and schedule in sync.
+======================================================== */
 
 
 
@@ -538,45 +608,12 @@ async function undoCompleteTask(task, previousStatus = "Pending") {
 }
 
 
-/*
-========================================================
-Feature: Visual Task Update Highlighting
+/* ========================================================
+   SECTION: Edit Feedback / Highlighting
+   Purpose: Visually highlight which task fields changed
+   after a successful update.
+======================================================== */
 
-User Story:
-As a user, I want to clearly see what fields changed after
-editing a task so that I can quickly identify the updates
-that were applied.
-
-Description:
-This function compares the updated task values with the
-original task data and visually highlights any fields that
-were modified.
-
-How it works:
-1. Finds the task row in the Task Log using the task ID.
-2. Compares each updated field with the original task values.
-3. If a value changed, the corresponding table cell receives
-   the CSS class "updated-field".
-4. The entire row temporarily receives the class "updated-row"
-   to draw attention to the update.
-5. After 2.5 seconds, all highlight styling is automatically
-   removed.
-
-Fields Checked:
-- Title
-- Status
-- Due date
-- Priority
-- Duration
-- Effort level
-- Start restriction
-- Category
-
-Result:
-Users receive immediate visual feedback showing which
-task information was changed.
-========================================================
-*/
 
 
 function highlightUpdatedFields(id, updatedTask) {
@@ -618,24 +655,44 @@ function highlightUpdatedFields(id, updatedTask) {
   }, 2500);
 }
 
+
+/* ========================================================
+   SECTION: Task Creation
+   Purpose: Read form input, validate it, send the create
+   request, and refresh dependent UI sections.
+======================================================== */
+
+/*
+User Story #1: Create Task
+
+As a user, I want to create a task with priority, effort,
+duration, and category so it can be stored and later scheduled.
+*/
+
+
+
 // ---------- Create Task ----------
 if (form) {
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    msg.textContent = "";
-    msg.className = "message";
+    if (msg) {
+      msg.textContent = "";
+      msg.className = "message";
+    }
 
-    const title = document.getElementById("title").value.trim();
-    const dueInput = document.getElementById("dueDate").value.trim();
-    const priority = document.getElementById("priority").value;
-    const durationMinutes = document.getElementById("durationMinutes").value;
-    const effortLevel = document.getElementById("effortLevel").value;
-    const startAfterInput = document.getElementById("startAfter").value.trim();
-    const category = document.getElementById("category").value;
+    const title = document.getElementById("title")?.value.trim() || "";
+    const dueInput = document.getElementById("dueDate")?.value.trim() || "";
+    const priority = document.getElementById("priority")?.value || "Medium";
+    const durationMinutes = document.getElementById("durationMinutes")?.value || 60;
+    const effortLevel = document.getElementById("effortLevel")?.value || "Medium";
+    const startAfterInput = document.getElementById("startAfter")?.value.trim() || "";
+    const category = document.getElementById("category")?.value || "General";
     const dueDateMsg = document.getElementById("dueDateMsg");
 
-    dueDateMsg.textContent = "";
+    if (dueDateMsg) {
+      dueDateMsg.textContent = "";
+    }
 
     if (!validateFutureDate(dueInput, dueDateMsg)) {
       return;
@@ -645,12 +702,16 @@ if (form) {
     const start_after = startAfterInput ? formatForBackend(startAfterInput) : null;
 
     if (!title || !due_date) {
-      msg.textContent = "Title and due date are required.";
-      msg.className = "message error";
+      if (msg) {
+        msg.textContent = "Title and due date are required.";
+        msg.className = "message error";
+      }
       return;
     }
 
     try {
+      console.log("Page URL:", window.location.href);
+
       const res = await fetch("/api/tasks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -668,32 +729,53 @@ if (form) {
       const data = await res.json();
 
       if (!res.ok) {
-        msg.textContent = data.error || "Failed to create task.";
-        msg.className = "message error";
+        if (msg) {
+          msg.textContent = data.error || "Failed to create task.";
+          msg.className = "message error";
+        }
         return;
       }
 
       form.reset();
-      dueDateMsg.textContent = "";
-      msg.textContent = "✓ Task created successfully!";
-      msg.className = "message success";
 
-      //Acceptance Critera #1: Auto efresh
+      if (dueDateMsg) {
+        dueDateMsg.textContent = "";
+      }
+
+      if (msg) {
+        msg.textContent = "✓ Task created successfully!";
+        msg.className = "message success";
+      }
 
       await fetchTasks();
       await refreshScheduleView();
       clearCreateMessageAfterDelay();
     } catch (err) {
-      msg.textContent = "Failed to create task.";
-      msg.className = "message error";
       console.error(err);
+      if (msg) {
+        msg.textContent = "Failed to create task.";
+        msg.className = "message error";
+      }
     }
   });
 }
 
 
+/* ========================================================
+   SECTION: Schedule Analytics / Intelligence
+   Purpose: Calculate schedule load and generate lightweight
+   scheduling insights shown in the schedule view.
+======================================================== */
 
 
+
+
+
+/*
+Purpose:
+Calculate schedule capacity usage based on selected range and
+max tasks per day, then update the progress bar UI.
+*/
 
 function updateScheduleLoad(schedule) {
   if (!scheduleLoadFill || !scheduleLoadPercent || !scheduleLoadText) return;
@@ -717,30 +799,21 @@ function updateScheduleLoad(schedule) {
   scheduleLoadText.textContent = `${scheduledCount} / ${totalSlots} slots used`;
 }
 
+
+/* USER STORY #3: Edit Story */
+
+
+/* ========================================================
+   SECTION: Task Editing
+   Purpose: Open the edit form, preload task data, submit
+   updates, and refresh the UI after changes.
+   User Story: Edit User Story 
+======================================================== */
+
 /*
-========================================================
-Feature: Edit Task
-
-User Story:
-As a user, I want to edit existing tasks so that
-I can update task information when plans change.
-
-Description:
-This event listener handles submission of the
-task editing form.
-
-Workflow:
-1. Prevents default form submission.
-2. Collects updated task values from the form.
-3. Validates required fields and due date.
-4. Sends a PUT request to update the task.
-5. Refreshes the task list.
-6. Highlights the fields that were updated.
-
-Result:
-The user receives immediate visual feedback
-showing which fields changed.
-========================================================
+Purpose:
+Reveal the edit form and prefill it with the selected task's
+current values so the user can make updates.
 */
 function openEditForm(task) {
   editSection.style.display = "block";
@@ -764,6 +837,12 @@ function openEditForm(task) {
   editSection.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
+
+/*
+Purpose:
+Hide the edit form, clear temporary edit messages, and reset
+the stored original task data.
+*/
 function closeEditForm() {
   editSection.style.display = "none";
   editForm.reset();
@@ -775,29 +854,29 @@ function closeEditForm() {
 }
 
 
+/*  USER STORY #4: Delete Task */
+
+
+
+
+
+/* ========================================================
+   SECTION: Task Deletion
+   Purpose: Confirm deletion, remove the task from the backend,
+   and refresh the task and schedule views.
+======================================================== */
+
+
+
+
+
+
 /*
-========================================================
-Feature: Delete Task
+User Story: Delete Task
 
-User Story:
-As a user, I want to delete tasks I no longer need
-so that my task list stays clean and relevant.
-
-Description:
-This function handles task deletion when the user clicks
-the "Delete" button in the Task Log.
-
-How it works:
-1. Prompts the user with a confirmation dialog.
-2. Sends a DELETE request to the backend API.
-3. If successful, refreshes the task list.
-4. Displays a temporary success or error message.
-
-Safety:
-A confirmation popup prevents accidental deletion.
-========================================================
+As a user, I want to remove tasks I no longer need so my task
+list stays clean and relevant.
 */
-
 async function handleDeleteTask(taskId, taskTitle) {
   const confirmed = window.confirm(`Are you sure you want to delete "${taskTitle}"?`);
 
@@ -832,6 +911,16 @@ async function handleDeleteTask(taskId, taskTitle) {
     clearCreateMessageAfterDelay();
   }
 }
+
+
+
+
+/* ========================================================
+   SECTION: Task Editing
+   Purpose: Open the edit form, preload task data, submit
+   updates, and refresh the UI after changes.
+======================================================== */
+
 
 if (editForm) {
   editForm.addEventListener("submit", async (e) => {
@@ -928,12 +1017,33 @@ if (sortSelect) {
   sortSelect.addEventListener("change", fetchTasks);
 }
 
-// ---------- Schedule Generation Variables ----------
+
+
+
+/** User Story #6: Schedule Generation  */
+
+
+
+
+
+/* ========================================================
+   SECTION: Schedule View References
+   Purpose: Cache schedule page controls and output areas.
+======================================================== */
+
+
+
 const generateScheduleBtn = document.getElementById("generateScheduleBtn");
 const scheduleMessage = document.getElementById("scheduleMessage");
 const scheduleOutput = document.getElementById("scheduleOutput");
 const scheduleRange = document.getElementById("scheduleRange");
 const maxTasksPerDay = document.getElementById("maxTasksPerDay");
+
+
+
+
+
+
 
 
 
@@ -956,7 +1066,6 @@ Users can easily see how their tasks are distributed
 across the upcoming days.
 ========================================================
 */
-
 
 
 
@@ -985,8 +1094,36 @@ function renderSchedule(schedule) {
     }
   }
 
-  scheduleOutput.innerHTML = '<div class="schedule-grid"></div>';
-  const grid = scheduleOutput.querySelector(".schedule-grid");
+  const startHour = 8;
+  const endHour = 18;
+  const totalHours = endHour - startHour;
+  const hourHeight = 72; // px per hour
+  const gridHeight = totalHours * hourHeight;
+
+  scheduleOutput.innerHTML = `
+    <div class="calendar-shell">
+      <div class="calendar-time-column" id="calendarTimeColumn"></div>
+      <div class="calendar-days-grid" id="calendarDaysGrid"></div>
+    </div>
+  `;
+
+  const timeColumn = document.getElementById("calendarTimeColumn");
+  const daysGrid = document.getElementById("calendarDaysGrid");
+
+  for (let hour = startHour; hour <= endHour; hour++) {
+    const timeLabel = document.createElement("div");
+    timeLabel.className = "calendar-time-label";
+
+    const displayHour = hour === 12 ? 12 : hour % 12 || 12;
+    const suffix = hour < 12 ? "AM" : "PM";
+    timeLabel.textContent = `${displayHour}:00 ${suffix}`;
+
+    if (hour < endHour) {
+      timeLabel.style.height = `${hourHeight}px`;
+    }
+
+    timeColumn.appendChild(timeLabel);
+  }
 
   let hasAnyTasks = false;
 
@@ -997,79 +1134,106 @@ function renderSchedule(schedule) {
     const dayKey = formatLocalDateKey(currentDate);
     const tasksForDay = schedule[dayKey] || [];
 
-    const dayCard = document.createElement("div");
-    dayCard.className = "schedule-day";
-
+    const dayColumn = document.createElement("div");
+    dayColumn.className = "calendar-day-column";
     if (dayKey === todayString) {
-      dayCard.classList.add("today");
+      dayColumn.classList.add("today");
     }
 
-    const heading = document.createElement("h3");
-    heading.innerHTML = `
-      ${currentDate.toLocaleDateString(undefined, { weekday: "long" })}
-      <span class="schedule-day-date">
-        ${currentDate.toLocaleDateString(undefined, {
-          month: "short",
-          day: "numeric",
-          year: "numeric"
-        })}
-      </span>
+    const header = document.createElement("div");
+    header.className = "calendar-day-header";
+    header.innerHTML = `
+      <strong>${currentDate.toLocaleDateString(undefined, { weekday: "short" })}</strong>
+      <span>${currentDate.toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric"
+      })}</span>
     `;
-    dayCard.appendChild(heading);
+    dayColumn.appendChild(header);
+
+    const body = document.createElement("div");
+    body.className = "calendar-day-body";
+    body.style.height = `${gridHeight}px`;
+
+    for (let h = 0; h < totalHours; h++) {
+      const line = document.createElement("div");
+      line.className = "calendar-hour-line";
+      line.style.top = `${h * hourHeight}px`;
+      body.appendChild(line);
+    }
 
     if (!tasksForDay.length) {
       const emptyText = document.createElement("p");
-      emptyText.className = "schedule-empty";
+      emptyText.className = "calendar-day-empty";
       emptyText.textContent = "No tasks scheduled.";
-      dayCard.appendChild(emptyText);
-      grid.appendChild(dayCard);
-      continue;
+      body.appendChild(emptyText);
+    } else {
+      hasAnyTasks = true;
+
+      tasksForDay.forEach((task) => {
+        let statusClass = "status-pending";
+        if (task.status === "In Progress") statusClass = "status-progress";
+        if (task.status === "Completed") statusClass = "status-completed";
+
+        let priorityClass = "priority-low";
+        if (task.priority === "High") priorityClass = "priority-high";
+        if (task.priority === "Medium") priorityClass = "priority-medium";
+
+        const startMinutes = parseTimeToMinutes(task.scheduled_start);
+        const endMinutes = parseTimeToMinutes(task.scheduled_end);
+
+        const top = ((startMinutes - startHour * 60) / 60) * hourHeight;
+        const height = ((endMinutes - startMinutes) / 60) * hourHeight;
+
+        const taskBlock = document.createElement("div");
+        taskBlock.className = "calendar-event-block";
+
+        if (conflictingTaskIds.has(task.id)) {
+          taskBlock.classList.add("conflict-task");
+        }
+
+        taskBlock.style.top = `${top}px`;
+        taskBlock.style.height = `${Math.max(height, 54)}px`;
+        if (height < 90) {
+          taskBlock.classList.add("compact");
+        }
+        
+        if (height < 68) {
+          taskBlock.classList.add("micro");
+        }
+
+        taskBlock.innerHTML = `
+          ${conflictingTaskIds.has(task.id) ? '<div class="conflict-label">CONFLICT</div>' : ""}
+          <div class="calendar-event-time">${task.scheduled_start} – ${task.scheduled_end}</div>
+          <div class="calendar-event-title">${task.title}</div>
+          <div class="calendar-event-meta">
+            <span class="status-badge ${statusClass}">${task.status}</span>
+            <span class="priority-pill ${priorityClass}">${task.priority}</span>
+          </div>
+          <div class="calendar-event-meta secondary">
+            <span class="task-meta-pill">${task.effort_level} Effort</span>
+            <span class="task-meta-pill">${task.category}</span>
+          </div>
+        `;
+
+        body.appendChild(taskBlock);
+      });
     }
 
-    hasAnyTasks = true;
-
-    tasksForDay.forEach((task) => {
-      let statusClass = "status-pending";
-      if (task.status === "In Progress") statusClass = "status-progress";
-      if (task.status === "Completed") statusClass = "status-completed";
-
-      let priorityClass = "priority-low";
-      if (task.priority === "High") priorityClass = "priority-high";
-      if (task.priority === "Medium") priorityClass = "priority-medium";
-
-      const taskCard = document.createElement("div");
-      taskCard.className = "schedule-task";
-
-      if (conflictingTaskIds.has(task.id)) {
-        taskCard.classList.add("conflict-task");
-      }
-
-      taskCard.innerHTML = `
-        ${conflictingTaskIds.has(task.id) ? '<div class="conflict-label">CONFLICT</div>' : ""}
-        <div class="calendar-task-time">${task.scheduled_start} – ${task.scheduled_end}</div>
-        <div class="calendar-task-title">${task.title}</div>
-        <div class="calendar-task-meta">
-          <span class="status-badge ${statusClass}">${task.status}</span>
-          <span class="priority-pill ${priorityClass}">${task.priority} Priority</span>
-          <span class="task-meta-pill">${task.effort_level} Effort</span>
-          <span class="task-meta-pill">${task.category}</span>
-        </div>
-        <div class="due-meta" style="margin-top:10px;">
-          Due: ${task.due_date}
-        </div>
-      `;
-
-      dayCard.appendChild(taskCard);
-    });
-
-    grid.appendChild(dayCard);
+    dayColumn.appendChild(body);
+    daysGrid.appendChild(dayColumn);
   }
 
-  if (!hasAnyTasks) {
+  if (!hasAnyTasks && scheduleMessage) {
     scheduleMessage.textContent = "No tasks available to schedule.";
     scheduleMessage.className = "message error";
   }
 }
+
+
+
+/**Extra Design Feature -- Loading Quote */
 
 async function loadQuote() {
   const quoteEl = document.getElementById("dailyQuote");
@@ -1086,6 +1250,9 @@ async function loadQuote() {
     quoteEl.textContent = "Stay focused. Keep building momentum.";
   }
 }
+
+
+/* USER STORY #5: AUTO Re-Fresh Storuy  */
 
 async function refreshScheduleView() {
   if (!scheduleOutput) return;
@@ -1164,6 +1331,10 @@ async function refreshScheduleView() {
     }
   }
 }
+
+
+
+/*User Story #5: Auto Refresh Story */
 
 async function refreshScheduleView() {
   if (!scheduleOutput) return;
@@ -1249,6 +1420,9 @@ async function refreshScheduleView() {
 }
 
 
+/** Feature -- Will Keep  */
+
+
 function loadSavedScheduleSettings() {
   const savedRange = localStorage.getItem("momentumScheduleRange");
   const savedMaxTasks = localStorage.getItem("momentumMaxTasksPerDay");
@@ -1325,7 +1499,7 @@ if (generateScheduleBtn) {
   generateScheduleBtn.addEventListener("click", handleGenerateSchedule);
 }
 
-// ---------- Dashboard ----------
+// ---------- Dashboard Constants ----------
 const totalTasksEl = document.getElementById("totalTasks");
 const pendingTasksEl = document.getElementById("pendingTasks");
 const completedTasksEl = document.getElementById("completedTasks");
@@ -1333,6 +1507,10 @@ const recentTasksBody = document.getElementById("recentTasksBody");
 const progressFill = document.getElementById("progressFill");
 const progressPercent = document.getElementById("progressPercent");
 const progressText = document.getElementById("progressText");
+
+
+
+/* Feature When We Load DashBoard */
 
 async function loadDashboard() {
   if (!totalTasksEl || !pendingTasksEl || !completedTasksEl || !recentTasksBody) return;
@@ -1425,11 +1603,7 @@ async function loadDashboard() {
   }
 }
 
-
-/* 
-User Story -- Conflict Detection Use
-
-*/
+/** Feature: Helper Method for Time Conversion */
 
 
 
@@ -1482,6 +1656,9 @@ function parseTimeToMinutes(timeStr) {
   return hours * 60 + minutes;
 }
 
+
+/** User Story #7: Conflict Detection  */
+
 function findScheduleConflicts(tasksForDay) {
   const conflicts = [];
 
@@ -1510,6 +1687,10 @@ function findScheduleConflicts(tasksForDay) {
 
   return conflicts;
 }
+
+
+
+
 
 function loadSavedSchedule() {
   if (!scheduleOutput) return;
@@ -1541,6 +1722,222 @@ function loadSavedSchedule() {
   renderConflictAlerts(conflicts);
 }
 
+
+//** Feature for UI : No Functionality with Actual Code  */
+
+
+function initMomentumOrb() {
+  const orbWrap = document.querySelector(".hero-orb-wrap") || document.getElementById("momentumOrbWrap");
+  const orbCanvas = document.getElementById("momentumOrbCanvas");
+
+  console.log("initMomentumOrb running");
+  console.log("orbWrap:", orbWrap);
+  console.log("orbCanvas:", orbCanvas);
+  console.log("THREE:", typeof THREE);
+
+  if (!orbWrap || !orbCanvas || typeof THREE === "undefined") return;
+
+  const scene = new THREE.Scene();
+
+  const camera = new THREE.PerspectiveCamera(
+    45,
+    orbWrap.clientWidth / orbWrap.clientHeight,
+    0.1,
+    1000
+  );
+  camera.position.set(0, 0, 6);
+
+  const renderer = new THREE.WebGLRenderer({
+    canvas: orbCanvas,
+    antialias: true,
+    alpha: true
+  });
+
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(orbWrap.clientWidth, orbWrap.clientHeight);
+
+  // Main orb
+  const sphereGeometry = new THREE.SphereGeometry(1.55, 64, 64);
+  const sphereMaterial = new THREE.MeshStandardMaterial({
+    color: 0x7c3aed,
+    emissive: 0x4c1d95,
+    emissiveIntensity: 0.9,
+    roughness: 0.28,
+    metalness: 0.22
+  });
+  const orb = new THREE.Mesh(sphereGeometry, sphereMaterial);
+  scene.add(orb);
+
+  // Glow shell
+  const glowGeometry = new THREE.SphereGeometry(1.82, 64, 64);
+  const glowMaterial = new THREE.MeshBasicMaterial({
+    color: 0xc084fc,
+    transparent: true,
+    opacity: 0.12
+  });
+  const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+  scene.add(glow);
+
+  // Ring
+  const ringGeometry = new THREE.TorusGeometry(2.15, 0.03, 16, 160);
+  const ringMaterial = new THREE.MeshBasicMaterial({
+    color: 0xd8b4fe,
+    transparent: true,
+    opacity: 0.65
+  });
+  const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+  ring.rotation.x = 1.1;
+  ring.rotation.y = 0.35;
+  scene.add(ring);
+
+  // Floating particles
+  const particleGroup = new THREE.Group();
+  const particleMaterial = new THREE.MeshBasicMaterial({ color: 0xf5d0fe });
+
+  for (let i = 0; i < 14; i++) {
+    const particle = new THREE.Mesh(
+      new THREE.SphereGeometry(0.045, 10, 10),
+      particleMaterial
+    );
+
+    const angle = (i / 14) * Math.PI * 2;
+    const radius = 2.45 + Math.random() * 0.22;
+    const y = (Math.random() - 0.5) * 1.8;
+
+    particle.position.set(
+      Math.cos(angle) * radius,
+      y,
+      Math.sin(angle) * radius
+    );
+
+    particleGroup.add(particle);
+  }
+
+  scene.add(particleGroup);
+
+  // Lighting
+  const ambientLight = new THREE.AmbientLight(0xffffff, 1.4);
+  scene.add(ambientLight);
+
+  const pointLight = new THREE.PointLight(0xc084fc, 2.2, 20);
+  pointLight.position.set(4, 3, 5);
+  scene.add(pointLight);
+
+  const backLight = new THREE.PointLight(0x60a5fa, 1.2, 18);
+  backLight.position.set(-4, -2, -4);
+  scene.add(backLight);
+
+  const clock = new THREE.Clock();
+
+  // Drag controls
+  let isDragging = false;
+  let previousMouseX = 0;
+  let previousMouseY = 0;
+
+  let targetRotationY = 0;
+  let targetRotationX = 0;
+
+  let currentRotationY = 0;
+  let currentRotationX = 0;
+
+  orbCanvas.addEventListener("mousedown", (e) => {
+    isDragging = true;
+    previousMouseX = e.clientX;
+    previousMouseY = e.clientY;
+    orbCanvas.classList.add("dragging");
+  });
+
+  window.addEventListener("mouseup", () => {
+    isDragging = false;
+    orbCanvas.classList.remove("dragging");
+  });
+
+  window.addEventListener("mousemove", (e) => {
+    if (!isDragging) return;
+
+    const deltaX = e.clientX - previousMouseX;
+    const deltaY = e.clientY - previousMouseY;
+
+    targetRotationY += deltaX * 0.008;
+    targetRotationX += deltaY * 0.004;
+
+    targetRotationX = Math.max(-0.6, Math.min(0.6, targetRotationX));
+
+    previousMouseX = e.clientX;
+    previousMouseY = e.clientY;
+  });
+
+  // Touch support
+  orbCanvas.addEventListener("touchstart", (e) => {
+    if (!e.touches.length) return;
+    isDragging = true;
+    previousMouseX = e.touches[0].clientX;
+    previousMouseY = e.touches[0].clientY;
+  }, { passive: true });
+
+  window.addEventListener("touchend", () => {
+    isDragging = false;
+  });
+
+  window.addEventListener("touchmove", (e) => {
+    if (!isDragging || !e.touches.length) return;
+
+    const deltaX = e.touches[0].clientX - previousMouseX;
+    const deltaY = e.touches[0].clientY - previousMouseY;
+
+    targetRotationY += deltaX * 0.008;
+    targetRotationX += deltaY * 0.004;
+
+    targetRotationX = Math.max(-0.6, Math.min(0.6, targetRotationX));
+
+    previousMouseX = e.touches[0].clientX;
+    previousMouseY = e.touches[0].clientY;
+  }, { passive: true });
+
+  function animate() {
+    requestAnimationFrame(animate);
+
+    const elapsed = clock.getElapsedTime();
+
+    // Idle auto-spin when not dragging
+    if (!isDragging) {
+      targetRotationY += 0.003;
+    }
+
+    // Smooth interpolation
+    currentRotationY += (targetRotationY - currentRotationY) * 0.08;
+    currentRotationX += (targetRotationX - currentRotationX) * 0.08;
+
+    orb.rotation.y = currentRotationY;
+    orb.rotation.x = currentRotationX + Math.sin(elapsed * 0.6) * 0.04;
+
+    glow.rotation.y = currentRotationY * 0.92;
+    glow.rotation.x = currentRotationX * 0.92;
+    glow.scale.setScalar(1 + Math.sin(elapsed * 1.5) * 0.012);
+
+    ring.rotation.z += 0.0025;
+    particleGroup.rotation.y += 0.002;
+    particleGroup.rotation.x = Math.sin(elapsed * 0.35) * 0.08;
+
+    renderer.render(scene, camera);
+  }
+
+  function handleResize() {
+    const width = orbWrap.clientWidth;
+    const height = orbWrap.clientHeight;
+
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
+    renderer.setSize(width, height);
+  }
+
+  window.addEventListener("resize", handleResize);
+
+  animate();
+ 
+
+}
+
 function detectAllScheduleConflicts(schedule) {
   const allConflicts = [];
 
@@ -1555,6 +1952,9 @@ function detectAllScheduleConflicts(schedule) {
 
   return allConflicts;
 }
+
+
+
 
 const conflictOutput = document.getElementById("conflictOutput");
 
@@ -1622,8 +2022,10 @@ if (tbody && sortSelect) {
 loadDashboard();
 loadQuote();
 
-
-
+const orbCanvas = document.getElementById("momentumOrbCanvas");
+if (orbCanvas) {
+  initMomentumOrb();
+}
 
 if (scheduleOutput) {
   loadSavedScheduleSettings();

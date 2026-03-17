@@ -2,216 +2,252 @@
 <html lang="en">
 <head>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Tasks | Smart Task Planner</title>
+  <title>Tasks | Momentum</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
-<body>
+<body class="app-page">
+  <div class="app-shell">
+    <header class="app-navbar">
+      <div class="app-navbar-inner">
+        <a href="index.html" class="brand brand-link">
+          <div class="momentum-icon"></div>
+          <span class="logo">Momentum</span>
+        </a>
 
-<main class="container">
+        <nav class="app-nav-links">
+          <a href="dashboard.html">Dashboard</a>
+          <a href="tasks.html" class="active">Tasks</a>
+          <a href="schedule.html">Schedule</a>
+        </nav>
 
-  <nav class="navbar">
-    <div class="brand">
-      <div class="momentum-icon"></div>
-      <h1 class="logo">Momentum</h1>
-    </div>
-  
-    <div class="nav-links">
-      <a href="dashboard.html">Dashboard</a>
-      <a href="tasks.html">Tasks</a>
-      <a href="schedule.html">Schedule</a>
-    </div>
-  </nav>
+        <div class="app-nav-actions">
+          <a href="index.html" class="app-nav-btn secondary">Home</a>
+        </div>
+      </div>
+    </header>
 
-<!-- CREATE TASK -->
-<section class="card">
-<h2>Create Task</h2>
+    <main class="tasks-page">
+      <section class="dashboard-hero">
+        <div>
+          <p class="dashboard-eyebrow">Task Workspace</p>
+          <h1>Task Manager</h1>
+          <p class="dashboard-subtitle">
+            Create tasks, organize priorities, and manage the work that drives your momentum.
+          </p>
+        </div>
+      </section>
 
-<form id="taskForm">
+      <section class="tasks-layout">
+        <section class="dashboard-panel create-task-panel">
+          <div class="panel-header">
+            <div>
+              <p class="panel-eyebrow">Create</p>
+              <h2>New Task</h2>
+            </div>
+          </div>
 
-<label>
-Title
-<input id="title" type="text" placeholder="Math Homework" required />
-</label>
+          <form id="taskForm" class="modern-task-form">
+            <div class="form-grid">
+              <label>
+                <span>Title</span>
+                <input id="title" type="text" placeholder="Ex: Math Homework" />
+              </label>
 
-<label>
-Due Date
-<div class="field-row">
-<input id="dueDate" type="datetime-local" required />
-<div id="dueDateMsg" class="field-message"></div>
-</div>
-</label>
+              <label>
+                <span>Due Date</span>
+                <input id="dueDate" type="datetime-local" />
+                <small id="dueDateMsg" class="field-msg"></small>
+              </label>
 
-<label>
-Priority
-<select id="priority" required>
-<option value="High">High</option>
-<option value="Medium">Medium</option>
-<option value="Low">Low</option>
-</select>
-</label>
+              <label>
+                <span>Priority</span>
+                <div class="select-wrap">
+                  <select id="priority">
+                    <option value="High">High</option>
+                    <option value="Medium" selected>Medium</option>
+                    <option value="Low">Low</option>
+                  </select>
+                </div>
+              </label>
 
-<label>
-Duration (minutes)
-<input id="durationMinutes" type="number" min="1" value="60" required />
-</label>
+              <label>
+                <span>Duration (minutes)</span>
+                <input id="durationMinutes" type="number" min="1" value="60" />
+              </label>
 
-<label>
-Effort Level
-<select id="effortLevel" required>
-<option value="High">High</option>
-<option value="Medium" selected>Medium</option>
-<option value="Low">Low</option>
-</select>
-</label>
+              <label>
+                <span>Effort Level</span>
+                <div class="select-wrap">
+                  <select id="effortLevel">
+                    <option value="High">High</option>
+                    <option value="Medium" selected>Medium</option>
+                    <option value="Low">Low</option>
+                  </select>
+                </div>
+              </label>
 
-<label>
-Earliest Start Date
-<input id="startAfter" type="datetime-local" />
-</label>
+              <label>
+                <span>Earliest Start</span>
+                <input id="startAfter" type="datetime-local" />
+              </label>
 
-<label>
-Category
-<select id="category" required>
-<option value="General" selected>General</option>
-<option value="School">School</option>
-<option value="Work">Work</option>
-<option value="Health">Health</option>
-<option value="Personal">Personal</option>
-</select>
-</label>
+              <label class="full-width">
+                <span>Category</span>
+                <div class="select-wrap">
+                  <select id="category">
+                    <option value="School">School</option>
+                    <option value="Health">Health</option>
+                    <option value="Personal" selected>Personal</option>
+                    <option value="Social">Social</option>
+                    <option value="Work">Work</option>
+                    <option value="General">General</option>
+                  </select>
+                </div>
+              </label>
+            </div>
 
-<button type="submit">Save Task</button>
+            <button type="submit" class="generate-btn">Save Task</button>
+            <p id="message" class="message"></p>
+          </form>
+        </section>
 
-<p id="message" class="message"></p>
+        <section class="dashboard-panel task-log-panel">
+          <div class="task-log-toolbar">
+            <div>
+              <p class="panel-eyebrow">Workspace</p>
+              <h2>Task Log</h2>
+              <p class="task-log-subtitle">Review, update, and complete the work in front of you.</p>
+            </div>
 
-</form>
-</section>
+            <div class="sort-wrap">
+              <label for="sortSelect">Sort by</label>
+              <div class="select-wrap">
+                <select id="sortSelect">
+                  <option value="">None</option>
+                  <option value="date">Due Date</option>
+                  <option value="priority">Priority</option>
+                </select>
+              </div>
+            </div>
+          </div>
 
+          <div class="task-log-table-wrap">
+            <table class="dashboard-table task-workspace-table">
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Status</th>
+                  <th>Due Date</th>
+                  <th>Priority</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="taskTableBody">
+                <tr>
+                  <td colspan="5">No tasks found.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </section>
 
-<!-- EDIT TASK -->
-<section class="card" id="editTaskSection" style="display:none;">
+      <section id="editTaskSection" class="dashboard-panel edit-task-panel" style="display: none;">
+        <div class="panel-header">
+          <div>
+            <p class="panel-eyebrow">Update</p>
+            <h2>Edit Task</h2>
+          </div>
+        </div>
 
-<h2>Edit Task</h2>
+        <form id="editTaskForm" class="modern-task-form">
+          <input type="hidden" id="editTaskId" />
 
-<form id="editTaskForm">
+          <div class="form-grid">
+            <label>
+              <span>Title</span>
+              <input id="editTitle" type="text" placeholder="Update task title" />
+            </label>
 
-<input type="hidden" id="editTaskId">
+            <label>
+              <span>Due Date</span>
+              <input id="editDueDate" type="datetime-local" />
+              <small id="editDueDateMsg" class="field-msg"></small>
+            </label>
 
-<label>
-Title
-<input id="editTitle" type="text" required />
-</label>
+            <label>
+              <span>Priority</span>
+              <div class="select-wrap">
+                <select id="editPriority">
+                  <option value="High">High</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Low">Low</option>
+                </select>
+              </div>
+            </label>
 
-<label>
-Due Date
-<div class="field-row">
-<input id="editDueDate" type="datetime-local" required />
-<div id="editDueDateMsg" class="field-message"></div>
-</div>
-</label>
+            <label>
+              <span>Status</span>
+              <div class="select-wrap">
+                <select id="editStatus">
+                  <option value="Pending">Pending</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Completed">Completed</option>
+                </select>
+              </div>
+            </label>
 
-<label>
-Priority
-<select id="editPriority" required>
-<option value="High">High</option>
-<option value="Medium">Medium</option>
-<option value="Low">Low</option>
-</select>
-</label>
+            <label>
+              <span>Duration (minutes)</span>
+              <input id="editDurationMinutes" type="number" min="1" value="60" />
+            </label>
 
-<label>
-Status
-<select id="editStatus" required>
-<option value="Pending">Pending</option>
-<option value="Not Started">Not Started</option>
-<option value="In Progress">In Progress</option>
-<option value="Completed">Completed</option>
-</select>
-</label>
+            <label>
+              <span>Effort Level</span>
+              <div class="select-wrap">
+                <select id="editEffortLevel">
+                  <option value="High">High</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Low">Low</option>
+                </select>
+              </div>
+            </label>
 
-<label>
-Duration (minutes)
-<input id="editDurationMinutes" type="number" min="1" required />
-</label>
+            <label>
+              <span>Earliest Start</span>
+              <input id="editStartAfter" type="datetime-local" />
+            </label>
 
-<label>
-Effort Level
-<select id="editEffortLevel" required>
-<option value="High">High</option>
-<option value="Medium">Medium</option>
-<option value="Low">Low</option>
-</select>
-</label>
+            <label class="full-width">
+              <span>Category</span>
+              <div class="select-wrap">
+                <select id="editCategory">
+                  <option value="School">School</option>
+                  <option value="Health">Health</option>
+                  <option value="Personal">Personal</option>
+                  <option value="Social">Social</option>
+                  <option value="Work">Work</option>
+                  <option value="General">General</option>
+                </select>
+              </div>
+            </label>
+          </div>
 
-<label>
-Earliest Start Date
-<input id="editStartAfter" type="datetime-local" />
-</label>
+          <div class="edit-form-actions">
+            <button type="submit" class="generate-btn">Update Task</button>
+            <button type="button" id="cancelEditBtn" class="app-nav-btn secondary">Cancel</button>
+          </div>
 
-<label>
-Category
-<select id="editCategory" required>
-<option value="General">General</option>
-<option value="School">School</option>
-<option value="Work">Work</option>
-<option value="Health">Health</option>
-<option value="Personal">Personal</option>
-</select>
-</label>
+          <p id="editMessage" class="message"></p>
+        </form>
+      </section>
+    </main>
+  </div>
 
-<div class="row">
-<button type="submit">Update Task</button>
-<button type="button" id="cancelEditBtn">Cancel</button>
-</div>
-
-<p id="editMessage" class="message"></p>
-
-</form>
-</section>
-
-
-<!-- TASK LOG -->
-<section class="card">
-
-<div class="row">
-<h2>Task Log</h2>
-
-<div>
-<label>Sort:</label>
-<select id="sortSelect">
-<option value="">None</option>
-<option value="date">Due Date</option>
-<option value="priority">Priority</option>
-</select>
-</div>
-
-</div>
-
-<table>
-
-<thead>
-<tr>
-<th>Title</th>
-<th>Status</th>
-<th>Due Date</th>
-<th>Priority</th>
-<th>Actions</th>
-</tr>
-</thead>
-
-<tbody id="taskTableBody"></tbody>
-
-</table>
-
-</section>
-
-</main>
-
-<script src="app.js"></script>
-
+  <script src="app.js"></script>
 </body>
 </html>
