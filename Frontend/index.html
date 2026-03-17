@@ -35,6 +35,11 @@
           </select>
         </label>
 
+        <label>
+          Duration (minutes)
+          <input id="durationMinutes" type="number" min="1" step="1" placeholder="60" required />
+        </label>
+
         <button type="submit">Save Task</button>
         <p id="message" class="message"></p>
       </form>
@@ -60,10 +65,29 @@
             <th>Status</th>
             <th>Due Date</th>
             <th>Priority</th>
+            <th>Duration</th>
           </tr>
         </thead>
         <tbody id="taskTableBody"></tbody>
       </table>
+    </section>
+
+    <section class="card schedule-card">
+      <div class="schedule-header">
+        <div>
+          <h2>Complete Schedule</h2>
+          <p class="schedule-subtitle">All tasks assigned with start and end times</p>
+        </div>
+        <button id="generateScheduleButton" type="button">Generate Schedule</button>
+      </div>
+
+      <div id="scheduleEmptyState" class="schedule-empty-state">
+        <div class="schedule-empty-icon" aria-hidden="true">○</div>
+        <p class="schedule-empty-title">No schedules generated yet</p>
+        <p class="schedule-empty-copy">Click the button above to generate a schedule</p>
+      </div>
+
+      <div id="scheduleList" class="schedule-list" hidden></div>
     </section>
   </main>
 
