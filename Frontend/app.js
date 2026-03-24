@@ -1566,7 +1566,7 @@ async function loadQuote() {
 }
 
 
-/* USER STORY #5: AUTO Re-Fresh Storuy  */
+/* USER STORY #5: AUTO Re-Fresh Story  */
 
 async function refreshScheduleView() {
   if (!scheduleOutput) return;
@@ -1659,93 +1659,6 @@ async function refreshScheduleView() {
 }
 
 
-
-/*User Story #5: Auto Refresh Story */
-
-async function refreshScheduleView() {
-  if (!scheduleOutput) return;
-
-  const savedGenerated = localStorage.getItem("momentumScheduleGenerated");
-  if (savedGenerated !== "true") {
-    scheduleOutput.innerHTML = "<p>No scheduled tasks available.</p>";
-    return;
-  }
-
-  const days = scheduleRange
-    ? Number(scheduleRange.value || localStorage.getItem("momentumScheduleRange") || 7)
-    : 7;
-
-  const max_tasks_per_day = maxTasksPerDay
-    ? Number(maxTasksPerDay.value || localStorage.getItem("momentumMaxTasksPerDay") || 4)
-    : 4;
-
-  try {
-    const res = await fetch("/api/schedule", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ days, max_tasks_per_day })
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      scheduleOutput.innerHTML = "<p>No scheduled tasks available.</p>";
-
-      if (scheduleMessage) {
-        scheduleMessage.textContent = data.error || "Failed to refresh schedule.";
-        scheduleMessage.className = "message error";
-      }
-
-      if (scheduleLoadFill) scheduleLoadFill.style.width = "0%";
-      if (scheduleLoadPercent) scheduleLoadPercent.textContent = "0%";
-      if (scheduleLoadText) scheduleLoadText.textContent = "0 / 0 slots used";
-      if (scheduleSummary) {
-        scheduleSummary.textContent = "No schedule insights are available.";
-      }
-      if (conflictOutput) {
-        conflictOutput.innerHTML = "<p>No conflicts detected.</p>";
-      }
-
-      return;
-    }
-
-    const scheduleData = data.schedule || {};
-    const hasScheduledTasks = Object.values(scheduleData).some(day => day.length > 0);
-
-    if (!hasScheduledTasks) {
-      scheduleOutput.innerHTML = "<p>No scheduled tasks available.</p>";
-
-      if (scheduleLoadFill) scheduleLoadFill.style.width = "0%";
-      if (scheduleLoadPercent) scheduleLoadPercent.textContent = "0%";
-      if (scheduleLoadText) scheduleLoadText.textContent = "0 / 0 slots used";
-      if (scheduleSummary) {
-        scheduleSummary.textContent = "No schedule insights are available because no tasks were scheduled.";
-      }
-      if (conflictOutput) {
-        conflictOutput.innerHTML = "<p>No conflicts detected.</p>";
-      }
-
-      return;
-    }
-
-    renderSchedule(scheduleData);
-    updateScheduleLoad(scheduleData);
-    generateScheduleSummary(scheduleData);
-
-    const conflicts = detectAllScheduleConflicts(scheduleData);
-    renderConflictAlerts(conflicts);
-  } catch (err) {
-    console.error(err);
-    scheduleOutput.innerHTML = "<p>No scheduled tasks available.</p>";
-
-    if (scheduleMessage) {
-      scheduleMessage.textContent = "Failed to refresh schedule.";
-      scheduleMessage.className = "message error";
-    }
-  }
-}
-
-
 /** Feature -- Will Keep  */
 
 
@@ -1770,6 +1683,12 @@ async function handleGenerateSchedule() {
 
   const days = scheduleRange ? Number(scheduleRange.value) : 7;
   const max_tasks_per_day = maxTasksPerDay ? Number(maxTasksPerDay.value) : 4;
+
+  if (!max_tasks_per_day || max_tasks_per_day <= 0) {
+  scheduleMessage.textContent = "Max tasks per day must be a positive number.";
+  scheduleMessage.className = "message error";
+  return;
+}
 
   try {
     const res = await fetch("/api/schedule", {
@@ -1942,18 +1861,6 @@ async function loadDashboard() {
 
 /** Feature: Helper Method for Time Conversion */
 
-
-
-function parseTimeToMinutes(timeStr) {
-  const [timePart, meridiem] = timeStr.split(" ");
-  let [hours, minutes] = timePart.split(":").map(Number);
-
-  if (meridiem === "PM" && hours !== 12) hours += 12;
-  if (meridiem === "AM" && hours === 12) hours = 0;
-
-  return hours * 60 + minutes;
-}
-
 function findScheduleConflicts(tasksForDay) {
   const conflicts = [];
 
@@ -1995,39 +1902,6 @@ function parseTimeToMinutes(timeStr) {
 
 
 /** User Story #7: Conflict Detection  */
-
-function findScheduleConflicts(tasksForDay) {
-  const conflicts = [];
-
-  for (let i = 0; i < tasksForDay.length; i++) {
-    const firstTask = tasksForDay[i];
-    const firstStart = parseTimeToMinutes(firstTask.scheduled_start);
-    const firstEnd = parseTimeToMinutes(firstTask.scheduled_end);
-
-    for (let j = i + 1; j < tasksForDay.length; j++) {
-      const secondTask = tasksForDay[j];
-      const secondStart = parseTimeToMinutes(secondTask.scheduled_start);
-      const secondEnd = parseTimeToMinutes(secondTask.scheduled_end);
-
-      const overlaps = firstStart < secondEnd && secondStart < firstEnd;
-
-      if (overlaps) {
-        conflicts.push({
-          firstTaskId: firstTask.id,
-          secondTaskId: secondTask.id,
-          firstTask,
-          secondTask
-        });
-      }
-    }
-  }
-
-  return conflicts;
-}
-
-
-
-
 
 function loadSavedSchedule() {
   if (!scheduleOutput) return;
