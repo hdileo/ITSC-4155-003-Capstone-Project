@@ -2,6 +2,7 @@ from datetime import datetime
 from functools import wraps
 from flask import Blueprint, jsonify, request, send_from_directory, session
 from .storage import create_task, get_all_tasks, update_task, delete_task, generate_schedule
+from datetime import datetime
 
 # Main blueprints
 api = Blueprint("api", __name__)
@@ -68,6 +69,20 @@ def me():
 # =========================
 # STATIC PAGES
 # =========================
+
+def is_valid_datetime_string(value):
+    try:
+        datetime.strptime(value, "%Y-%m-%d %H:%M")
+        return True
+    except (TypeError, ValueError):
+        return False
+
+def is_valid_datetime_string(value):
+    try:
+        datetime.strptime(value, "%Y-%m-%d %H:%M")
+        return True
+    except (TypeError, ValueError):
+        return False
 
 @api.route("/", methods=["GET"])
 def index():
@@ -174,6 +189,8 @@ def add_task():
 
     if priority not in {"Low", "Medium", "High"}:
         return jsonify({"error": "Priority must be Low, Medium, or High."}), 400
+    if start_after and not is_valid_datetime_string(start_after):
+        return jsonify({"error": "Invalid earliest start date format. Use YYYY-MM-DD HH:MM"}), 400
 
     try:
         duration_minutes = int(duration_minutes)
@@ -228,6 +245,8 @@ def edit_task(task_id):
     description = (data.get("description") or "").strip()
     notes = (data.get("notes") or "").strip()
 
+    if start_after and not is_valid_datetime_string(start_after):
+        return jsonify({"error": "Invalid earliest start date format. Use YYYY-MM-DD HH:MM"}), 400
     if not title:
         return jsonify({"error": "Title is required."}), 400
 
@@ -329,3 +348,90 @@ def build_schedule():
         "message": "Schedule generated successfully.",
         "schedule": schedule
     }), 200
+
+
+
+bp = Blueprint("routes", __name__)
+
+
+@bp.route("/api/tasks", methods=["POST"])
+def api_create_task():
+    data = request.get_json() or {}
+
+    title = data.get("title")
+    due_date = data.get("due_date")
+    priority = data.get("priority")
+    duration_minutes = data.get("duration_minutes", 60)
+    effort_level = data.get("effort_level", "Medium")
+    start_after = data.get("start_after")
+    category = data.get("category", "General")
+    description = data.get("description", "")
+    notes = data.get("notes", "")
+    link = data.get("link", "")
+
+    if start_after and not is_valid_datetime_string(start_after):
+        return jsonify({"error": "Invalid earliest start date format. Use YYYY-MM-DD HH:MM"}), 400
+
+    if not title or not due_date or not priority:
+        return jsonify({"error": "Title, due date, and priority are required."}), 400
+
+    try:
+        task = create_task(
+            title=title,
+            due_date=due_date,
+            priority=priority,
+            duration_minutes=duration_minutes,
+            effort_level=effort_level,
+            start_after=start_after,
+            category=category,
+            description=description,
+            notes=notes,
+            link=link
+        )
+        return jsonify(task), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+
+@bp.route("/api/tasks/<int:task_id>", methods=["PUT"])
+def api_update_task(task_id):
+    data = request.get_json() or {}
+
+    title = data.get("title")
+    due_date = data.get("due_date")
+    priority = data.get("priority")
+    status = data.get("status")
+    duration_minutes = data.get("duration_minutes", 60)
+    effort_level = data.get("effort_level", "Medium")
+    start_after = data.get("start_after")
+    category = data.get("category", "General")
+    description = data.get("description", "")
+    notes = data.get("notes", "")
+    link = data.get("link", "")
+
+    if not title or not due_date or not priority or not status:
+        return jsonify({"error": "Missing required fields."}), 400
+
+    try:
+        task = update_task(
+            task_id=task_id,
+            title=title,
+            due_date=due_date,
+            priority=priority,
+            status=status,
+            duration_minutes=duration_minutes,
+            effort_level=effort_level,
+            start_after=start_after,
+            category=category,
+            description=description,
+            notes=notes,
+            link=link
+        )
+
+        if not task:
+            return jsonify({"error": "Task not found."}), 404
+
+        return jsonify(task), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
