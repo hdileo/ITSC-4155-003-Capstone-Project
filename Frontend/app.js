@@ -1296,13 +1296,10 @@ function renderSchedule(schedule) {
   });
 
   const conflictOutput = document.getElementById("conflictOutput");
-  if (conflictOutput) {
-    if (allConflicts.length > 0) {
-      conflictOutput.innerHTML = `<p class="message error">⚠ Schedule conflict detected.</p>`;
-    } else {
-      conflictOutput.innerHTML = `<p>No conflicts detected.</p>`;
-    }
-  }
+
+if (conflictOutput) {
+  renderConflictAlerts(allConflicts);
+}
 
   const startHour = 8;
   const endHour = 18;

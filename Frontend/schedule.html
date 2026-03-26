@@ -1,3 +1,148 @@
+<!--
+========================================================
+SCHEDULE.HTML OVERVIEW — MOMENTUM SCHEDULER VIEW
+========================================================
+
+Purpose:
+This file serves as the schedule planning interface for
+the Momentum application. It allows users to generate,
+visualize, and analyze their task schedule based on
+constraints such as time range and workload capacity.
+
+High-Level Responsibility:
+schedule.html is responsible for:
+1. Providing controls to generate a schedule
+2. Displaying scheduling results (time-blocked tasks)
+3. Visualizing workload capacity and distribution
+4. Highlighting scheduling conflicts and insights
+5. Presenting backend-generated data in a structured UI
+
+--------------------------------------------------------
+ARCHITECTURAL ROLE
+--------------------------------------------------------
+
+This file belongs to the View layer of the application.
+
+- Model / Data Layer:
+  database.py and storage.py (task + schedule logic)
+- Controller Layer:
+  routes.py (API endpoints)
+  app.js (frontend event handling + rendering)
+- View Layer:
+  schedule.html (this file)
+
+This page does not compute schedules itself. Instead, it:
+- collects user inputs (range, max tasks per day)
+- sends requests to the backend (/api/schedule)
+- renders the returned schedule data
+
+--------------------------------------------------------
+MAIN UI SECTIONS
+--------------------------------------------------------
+
+1. Navigation Bar
+Purpose:
+- Provides consistent navigation across the application
+- Allows switching between Dashboard, Tasks, and Schedule
+- Reinforces app branding
+
+2. Schedule Hero Section
+Purpose:
+- Introduces the scheduling feature
+- Explains the purpose of the scheduling engine
+- Provides context for how the system organizes tasks
+
+3. Schedule Capacity Panel
+Purpose:
+- Displays how full the generated schedule is
+- Visualizes task load using a progress bar
+- Helps users understand workload distribution
+
+Examples:
+- % of schedule used
+- total slots filled vs available
+
+4. Schedule Controls Panel
+Purpose:
+- Allows users to configure scheduling parameters
+
+User Inputs:
+- Schedule range (1 week, 2 weeks)
+- Max tasks per day
+
+Action:
+- "Generate Schedule" button triggers backend scheduling
+
+5. Intelligence Panel
+Purpose:
+- Displays insights generated from the schedule
+- Helps users understand patterns in their workload
+
+Examples:
+- workload balance
+- scheduling efficiency
+- task distribution
+
+6. Conflict Alerts Panel
+Purpose:
+- Identifies overlapping or problematic task assignments
+- Alerts users to scheduling conflicts
+- Suggests better scheduling opportunities
+
+7. Generated Schedule Output
+Purpose:
+- Displays the final structured schedule returned from backend
+- Shows tasks grouped by day
+- Includes time blocks (start–end times)
+
+--------------------------------------------------------
+USER EXPERIENCE FLOW
+--------------------------------------------------------
+
+1. User selects scheduling options
+2. User clicks "Generate Schedule"
+3. Frontend sends request to /api/schedule
+4. Backend generates schedule using scheduling logic
+5. Response is returned to frontend
+6. UI updates:
+   - schedule output
+   - capacity visualization
+   - insights panel
+   - conflict alerts
+
+--------------------------------------------------------
+DESIGN PURPOSE
+--------------------------------------------------------
+
+This page is designed to:
+- visually represent time-based scheduling
+- make complex scheduling logic easy to understand
+- provide actionable insights to the user
+- simulate a real productivity planning system
+
+The UI emphasizes:
+- clarity (structured layout)
+- feedback (progress bar + messages)
+- intelligence (conflict + insight panels)
+
+--------------------------------------------------------
+WHY THIS FILE IS IMPORTANT
+--------------------------------------------------------
+
+schedule.html represents the core computational feature
+of the Momentum application.
+
+While other pages manage tasks, this page:
+- transforms task data into a structured schedule
+- visualizes time allocation
+- demonstrates algorithmic decision-making
+
+It is the primary interface for showcasing the system’s
+scheduling logic, making it one of the most important
+components of the project.
+
+========================================================
+-->
 <!doctype html>
 <html lang="en">
 <head>

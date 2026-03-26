@@ -1,3 +1,160 @@
+"""
+========================================================
+ROUTES.PY OVERVIEW — MOMENTUM APPLICATION
+========================================================
+
+Purpose:
+This file defines the main Flask routes for the Momentum
+application. It acts as the controller layer of the system,
+connecting frontend requests to backend logic and returning
+the appropriate responses.
+
+High-Level Responsibility:
+routes.py is responsible for:
+1. Serving frontend HTML pages
+2. Handling authentication routes
+3. Handling task-related API requests
+4. Handling schedule-generation API requests
+5. Validating incoming request data before passing it to
+   the backend storage / scheduling layer
+
+--------------------------------------------------------
+ARCHITECTURAL ROLE
+--------------------------------------------------------
+
+This file primarily serves as the Controller layer in the
+project’s MVC-style structure:
+
+- Model / Data Layer:
+  database.py and storage.py
+- View Layer:
+  index.html, dashboard.html, tasks.html, schedule.html,
+  login.html, plus frontend rendering in JavaScript
+- Controller Layer:
+  routes.py
+
+routes.py does not directly implement most database logic
+or scheduling logic itself. Instead, it:
+- receives requests from the frontend
+- validates and organizes input
+- calls backend helper functions such as:
+    create_task()
+    get_all_tasks()
+    update_task()
+    delete_task()
+    generate_schedule()
+- returns structured JSON responses to the frontend
+
+--------------------------------------------------------
+MAIN FUNCTIONAL AREAS
+--------------------------------------------------------
+
+1. Authentication Routes
+These routes manage login, logout, and session checking.
+
+Examples:
+- /api/login
+- /api/logout
+- /api/me
+
+Purpose:
+- verify user credentials
+- create or remove session data
+- protect other routes through login_required
+
+2. Static Page Routes
+These routes serve the application’s frontend HTML pages.
+
+Examples:
+- /
+- /dashboard.html
+- /tasks.html
+- /schedule.html
+- /login.html
+
+Purpose:
+- load the correct frontend page for the user
+- connect Flask backend routing with the web interface
+
+3. Task API Routes
+These routes manage CRUD operations for tasks.
+
+Examples:
+- GET /api/tasks
+- POST /api/tasks
+- PUT /api/tasks/<task_id>
+- DELETE /api/tasks/<task_id>
+
+Purpose:
+- retrieve tasks from the database
+- create new tasks
+- update existing tasks
+- delete tasks
+- compute additional response fields such as overdue status
+
+4. Schedule API Route
+This route generates a schedule from saved tasks.
+
+Example:
+- POST /api/schedule
+
+Purpose:
+- accept schedule constraints such as number of days and
+  max tasks per day
+- call the scheduling engine
+- return a structured schedule for frontend rendering
+
+--------------------------------------------------------
+VALIDATION RESPONSIBILITY
+--------------------------------------------------------
+
+routes.py is also responsible for validating request data
+before sending it into the backend logic.
+
+Examples of validation include:
+- required fields such as title and due_date
+- allowed values such as priority and effort level
+- numeric checks such as duration_minutes > 0
+- datetime string validation for fields like start_after
+
+This prevents invalid user input from breaking database
+operations or scheduling logic.
+
+--------------------------------------------------------
+SECURITY RESPONSIBILITY
+--------------------------------------------------------
+
+Protected API routes use the login_required decorator.
+
+Purpose:
+- ensure only authenticated users can access task and
+  schedule functionality
+- prevent unauthorized users from interacting with
+  protected application data
+
+--------------------------------------------------------
+WHY THIS FILE IS IMPORTANT
+--------------------------------------------------------
+
+routes.py is the central communication layer of the app.
+It coordinates:
+- frontend pages
+- user actions
+- backend processing
+- API responses
+
+Without this file, the frontend would have no way to:
+- request task data
+- create or update tasks
+- generate schedules
+- authenticate users
+
+In summary, routes.py is the backbone of request handling
+in Momentum and ensures the application behaves as a
+structured, secure, and interactive full-stack system.
+
+========================================================
+"""
 from datetime import datetime
 from functools import wraps
 from flask import Blueprint, jsonify, request, send_from_directory, session
@@ -13,8 +170,12 @@ TEST_PASSWORD = "momentum123"
 
 
 # =========================
-# AUTH ROUTES
+# AUTH ROUTES( Login, Login_Required, Logout, Verify the User ) -- All of this is what we uses for Our Login 
 # =========================
+
+
+
+
 
 @auth.route("/api/login", methods=["POST"])
 def login():
@@ -67,9 +228,23 @@ def me():
 
 
 # =========================
-# STATIC PAGES
+# STATIC PAGES/Entry Points into our Application 
 # =========================
 
+
+# -----------------------------------------------
+# Helper: Validate Datetime String Format
+# -----------------------------------------------
+# Purpose:
+# Ensures that a given string follows the expected datetime format
+# ("YYYY-MM-DD HH:MM") before it is processed or stored.
+#
+# Why it matters:
+# Prevents runtime errors during parsing, protects scheduling logic,
+# and ensures only valid datetime values are used throughout the system.
+#
+# Returns:
+# True if valid format, False otherwise
 def is_valid_datetime_string(value):
     try:
         datetime.strptime(value, "%Y-%m-%d %H:%M")
@@ -83,26 +258,75 @@ def is_valid_datetime_string(value):
         return True
     except (TypeError, ValueError):
         return False
+
+
+# -----------------------------------------------
+# Route: Landing Page
+# -----------------------------------------------
+# Purpose:
+# Serves the main entry point of the application (index.html).
+#
+# Behavior:
+# When a user visits the root URL ("/"), this route loads
+# the frontend landing page.
 
 @api.route("/", methods=["GET"])
 def index():
     return send_from_directory("../../frontend", "index.html")
 
 
+# -----------------------------------------------
+# Route: Dashboard Page
+# -----------------------------------------------
+# Purpose:
+# Serves the main dashboard interface where users can view
+# high-level information and interact with the app.
+#
+# Behavior:
+# Loads dashboard.html from the frontend directory.
+
 @api.route("/dashboard.html", methods=["GET"])
 def dashboard_page():
     return send_from_directory("../../frontend", "dashboard.html")
+
+# -----------------------------------------------
+# Route: Tasks Page
+# -----------------------------------------------
+# Purpose:
+# Serves the tasks management interface where users can
+# create, view, edit, and delete tasks.
+#
+# Behavior:
+# Loads tasks.html from the frontend directory.
 
 
 @api.route("/tasks.html", methods=["GET"])
 def tasks_page():
     return send_from_directory("../../frontend", "tasks.html")
 
+# -----------------------------------------------
+# Route: Schedule Page
+# -----------------------------------------------
+# Purpose:
+# Serves the schedule view where users can see their tasks
+# organized into a generated schedule with time blocks.
+#
+# Behavior:
+# Loads schedule.html from the frontend directory.
 
 @api.route("/schedule.html", methods=["GET"])
 def schedule_page():
     return send_from_directory("../../frontend", "schedule.html")
 
+# -----------------------------------------------
+# Route: Login Page
+# -----------------------------------------------
+# Purpose:
+# Serves the authentication interface where users can log in
+# to access the application.
+#
+# Behavior:
+# Loads login.html from the frontend directory.
 
 @api.route("/login.html", methods=["GET"])
 def login_page():
@@ -119,8 +343,35 @@ def health():
 
 
 # =========================
-# TASK ROUTES
+# TASK ROUTES(Ex: LIST, ADD, EDIT, DELETE)
 # =========================
+
+
+
+
+
+
+
+
+
+# -----------------------------------------------
+# Route: Get All Tasks (With Optional Sorting)
+# -----------------------------------------------
+# Purpose:
+# Retrieves all tasks from the database and returns them
+# in a structured JSON format for the frontend.
+#
+# Features:
+# - Supports optional sorting (by date or priority)
+# - Calculates whether each task is overdue
+# - Transforms raw database rows into API-friendly objects
+#
+# Security:
+# - Protected by @login_required (user must be authenticated)
+#
+# Returns:
+# JSON list of tasks with computed "is_overdue" field
+
 
 @api.route("/api/tasks", methods=["GET"])
 @login_required
@@ -164,6 +415,10 @@ def list_tasks():
     ]
 
     return jsonify(response), 200
+
+
+
+
 
 
 @api.route("/api/tasks", methods=["POST"])
@@ -227,6 +482,29 @@ def add_task():
         "description": task["description"],
         "notes": task["notes"]
     }), 201
+
+
+# -----------------------------------------------
+# Route: Create New Task
+# -----------------------------------------------
+# Purpose:
+# Accepts task data from the frontend, validates inputs,
+# and inserts a new task into the database.
+#
+# Features:
+# - Extracts and sanitizes input fields from request body
+# - Validates required fields (title, due_date, priority)
+# - Enforces constraints (duration, effort level, priority)
+# - Validates optional datetime fields (start_after)
+# - Creates task using database layer
+# - Returns newly created task in JSON format
+#
+# Security:
+# - Protected by @login_required (user must be authenticated)
+#
+# Returns:
+# 201 Created → Task successfully created
+# 400 Bad Request → Validation error
 
 
 @api.route("/api/tasks/<int:task_id>", methods=["PUT"])
@@ -303,6 +581,23 @@ def edit_task(task_id):
         }
     }), 200
 
+# -----------------------------------------------
+# Route: Delete Task
+# -----------------------------------------------
+# Purpose:
+# Removes a task from the database based on its unique ID.
+#
+# Features:
+# - Accepts task_id as a URL parameter
+# - Calls storage layer to delete the task
+# - Handles success and failure cases
+#
+# Security:
+# - Protected by @login_required (user must be authenticated)
+#
+# Returns:
+# 200 OK → Task successfully deleted
+# 404 Not Found → Task does not exist or deletion failed
 
 @api.route("/api/tasks/<int:task_id>", methods=["DELETE"])
 @login_required
@@ -318,6 +613,29 @@ def remove_task(task_id):
 # =========================
 # SCHEDULE ROUTE
 # =========================
+
+
+
+
+# -----------------------------------------------
+# Route: Generate Schedule
+# -----------------------------------------------
+# Purpose:
+# Generates a structured schedule based on existing tasks,
+# using constraints such as number of days and max tasks per day.
+#
+# Features:
+# - Accepts scheduling parameters from request body
+# - Validates numeric inputs (days, max_tasks_per_day)
+# - Calls scheduling logic to build optimized schedule
+# - Handles empty schedule scenarios gracefully
+#
+# Security:
+# - Protected by @login_required (user must be authenticated)
+#
+# Returns:
+# 200 OK → Schedule generated (or no tasks available)
+# 400 Bad Request → Invalid input values
 
 @api.route("/api/schedule", methods=["POST"])
 @login_required
@@ -352,6 +670,27 @@ def build_schedule():
 
 
 bp = Blueprint("routes", __name__)
+
+
+# -----------------------------------------------
+# Route: Create Task (Alternate API Endpoint)
+# -----------------------------------------------
+# Purpose:
+# Handles creation of a new task using data provided
+# in the request body, then inserts it into the database.
+#
+# Features:
+# - Extracts task data from JSON request
+# - Supports extended fields (category, notes, link, etc.)
+# - Validates required fields (title, due_date, priority)
+# - Validates optional datetime fields (start_after)
+# - Handles database insertion through storage layer
+# - Returns created task or error response
+#
+# Returns:
+# 200 OK → Task successfully created
+# 400 Bad Request → Validation failure
+# 500 Internal Server Error → Unexpected failure
 
 
 @bp.route("/api/tasks", methods=["POST"])

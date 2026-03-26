@@ -538,6 +538,34 @@ def balance_categories(tasks):
     return balanced
 
 
+def balance_effort_levels(tasks):
+    remaining = tasks[:]
+    balanced = []
+
+    while remaining:
+        if not balanced:
+            balanced.append(remaining.pop(0))
+            continue
+
+        last_effort = balanced[-1]["effort_level"]
+
+        swap_index = None
+        for i, task in enumerate(remaining):
+            if last_effort == "High":
+                if task["effort_level"] != "High":
+                    swap_index = i
+                    break
+            else:
+                swap_index = 0
+                break
+
+        if swap_index is not None:
+            balanced.append(remaining.pop(swap_index))
+        else:
+            balanced.append(remaining.pop(0))
+
+    return balanced
+
 '''
 User Story #12: Schedule Display
 Purpose: Works in Cohesion With  format_time_range -- this will turn string into a datetme format -- then format_time_rnage will format into start-end time
@@ -563,6 +591,10 @@ def assign_times_for_day(tasks, day_date):
     return tasks
 
 
+'''
+User Story #6: Generate Schedule
+
+'''
 
 def generate_schedule(days=7, max_tasks_per_day=4):
     tasks = get_all_tasks(sort_by="date")
@@ -654,6 +686,7 @@ def generate_schedule(days=7, max_tasks_per_day=4):
     # 2. assign time ranges in final order
     for day_key, day_tasks in grouped_schedule.items():
         balanced_tasks = balance_categories(day_tasks)
+        balanced_tasks = balance_effort_levels(balanced_tasks)
         day_date = datetime.strptime(day_key, "%Y-%m-%d").date()
         grouped_schedule[day_key] = assign_times_for_day(balanced_tasks, day_date)
 
