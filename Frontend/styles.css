@@ -846,32 +846,33 @@ button {
   }
   
   .momentum-icon {
-	width: 26px;
-	height: 26px;
+	width: 36px;
+	height: 36px;
 	border-radius: 50%;
-	border: 4px solid transparent;
-	border-top: 4px solid #8f6bff;
-	border-right: 4px solid #6a5cff;
-	animation: spin 3s linear infinite;
+  
+	background: radial-gradient(circle at 30% 30%, #a78bfa, #7c3aed, #4c1d95);
+	
+	box-shadow:
+	  0 0 12px rgba(124, 58, 237, 0.6),
+	  0 0 24px rgba(168, 85, 247, 0.4);
+  
+	display: flex;
+	align-items: center;
+	justify-content: center;
+  
+	position: relative;
   }
   
-  @keyframes spin {
-	from {
-	  transform: rotate(0deg);
-	}
-	to {
-	  transform: rotate(360deg);
-	}
+  @keyframes float {
+	0% { transform: translateY(0px); }
+	50% { transform: translateY(-2px); }
+	100% { transform: translateY(0px); }
   }
+  
   .momentum-icon {
-	width: 26px;
-	height: 26px;
-	border-radius: 50%;
-	background: radial-gradient(circle at center, #6a5cff 2px, transparent 3px),
-				radial-gradient(circle at center, #8f6bff 2px, transparent 3px);
-	background-size: 10px 10px;
-	animation: spin 5s linear infinite;
+	animation: float 3s ease-in-out infinite;
   }
+  
   .intro-overlay {
 	position: fixed;
 	inset: 0;
@@ -2622,12 +2623,52 @@ button {
   }
   
   .logo {
-	font-weight: 800;
-	font-size: 1.35rem;
-	letter-spacing: -0.03em;
-	background: linear-gradient(90deg, #a78bfa 0%, #6366f1 100%);
+	font-weight: 700;
+	font-size: 1.2rem;
+  
+	background: linear-gradient(90deg, #c4b5fd, #a78bfa, #7c3aed);
 	-webkit-background-clip: text;
 	-webkit-text-fill-color: transparent;
+  
+	letter-spacing: 0.5px;
+  }
+
+  .ring {
+	position: absolute;
+	width: 46px;
+	height: 46px;
+	border: 1px solid rgba(168, 85, 247, 0.4);
+	border-radius: 50%;
+	animation: spin 8s linear infinite;
+  }
+  
+  @keyframes spin {
+	from { transform: rotate(0deg); }
+	to { transform: rotate(360deg); }
+  }
+  
+  @keyframes orbSpin {
+	from {
+	  transform: rotate(0deg);
+	}
+	to {
+	  transform: rotate(360deg);
+	}
+  }
+  
+  .momentum-icon {
+	animation: orbSpin 8s linear infinite;
+  }
+
+  .brand-link:hover .momentum-icon {
+	transform: scale(1.08);
+	box-shadow:
+	  0 0 18px rgba(124, 58, 237, 0.8),
+	  0 0 32px rgba(168, 85, 247, 0.6);
+  }
+  
+  .brand-link:hover .logo {
+	letter-spacing: 1px;
   }
   
   .navbar-links {
