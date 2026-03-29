@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Loading | Momentum</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="loading-page">
+  <div class="loading-shell">
+    <div class="loading-bg-orb orb-one"></div>
+    <div class="loading-bg-orb orb-two"></div>
+
+    <div class="loading-content">
+      <div class="loading-logo-wrap">
+        <div class="momentum-loader-ring"></div>
+        <div class="momentum-loader-core"></div>
+      </div>
+
+      <p class="loading-eyebrow">Momentum</p>
+      <h1 class="loading-title">Preparing Your Workspace</h1>
+      <p class="loading-subtitle" id="loadingMessage">
+        Loading your dashboard experience...
+      </p>
+
+      <div class="loading-progress">
+        <div class="loading-progress-bar" id="loadingProgressBar"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const username = localStorage.getItem("username") || "Momentum";
+        const loadingMessage = document.getElementById("loadingMessage");
+        const progressBar = document.getElementById("loadingProgressBar");
+      
+        const messages = [
+          `Welcome, ${username}. Initializing Momentum...`,
+          "Syncing your dashboard modules...",
+          "Loading tasks, analytics, and insights...",
+          "Finalizing your workspace..."
+        ];
+      
+        let step = 0;
+        let progress = 0;
+      
+        const messageInterval = setInterval(() => {
+          if (step < messages.length && loadingMessage) {
+            loadingMessage.textContent = messages[step];
+            step++;
+          }
+        }, 700);
+      
+        const progressInterval = setInterval(() => {
+          progress += 8;
+          if (progressBar) {
+            progressBar.style.width = `${Math.min(progress, 100)}%`;
+          }
+      
+          if (progress >= 100) {
+            clearInterval(progressInterval);
+            clearInterval(messageInterval);
+      
+            setTimeout(() => {
+              window.location.href = "/dashboard.html";
+            }, 300);
+          }
+        }, 180);
+      });
+  </script>
+</body>
+</html>

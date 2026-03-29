@@ -32,12 +32,17 @@
 
     <main class="dashboard-page">
       <section class="dashboard-hero">
-        <div>
+        <div class="dashboard-hero-content">
           <p class="dashboard-eyebrow">Workspace</p>
-          <h1>Momentum Dashboard</h1>
-          <p class="dashboard-subtitle">
+          <h1 id="dashboardTitle">Momentum Dashboard</h1>
+          <p id="dashboardWelcome" class="dashboard-subtitle">
             Track progress, review your latest tasks, and keep your week moving forward.
           </p>
+
+          <div class="dashboard-status-pill">
+            <span class="status-dot"></span>
+            Personalized workspace active
+          </div>
         </div>
       </section>
 
@@ -89,8 +94,6 @@
           </div>
         </section>
 
-       
-
         <section class="dashboard-side-column">
           <article class="dashboard-panel">
             <div class="panel-header">
@@ -131,6 +134,7 @@
               </div>
             </div>
           </article>
+
           <article class="dashboard-panel insights-panel">
             <div class="panel-header">
               <div>
@@ -138,27 +142,75 @@
                 <h2>Momentum Insights</h2>
               </div>
             </div>
-          
+
             <div id="insightsList" class="insights-list">
               <div class="insight-item">Loading insights...</div>
             </div>
           </article>
+        </section>
+      </section>
 
-          <article class="dashboard-panel quote-panel">
-            <div class="panel-header">
-              <div>
-                <p class="panel-eyebrow">Focus</p>
-                <h2>Momentum Quote</h2>
+      <section class="dashboard-full-width">
+        <article class="dashboard-panel analytics-panel">
+          <div class="panel-header">
+            <div>
+              <p class="panel-eyebrow">Analytics</p>
+              <h2>Task Analytics</h2>
+            </div>
+          </div>
+
+          <div class="slider-container">
+            <button class="prev-btn" type="button" aria-label="Previous chart">←</button>
+
+            <div class="slides-wrapper">
+              <div class="slides">
+                <div class="slide">
+                  <div class="chart-box">
+                    <canvas id="chart1"></canvas>
+                  </div>
+                </div>
+                <div class="slide">
+                  <div class="chart-box">
+                    <canvas id="chart2"></canvas>
+                  </div>
+                </div>
+                <div class="slide">
+                  <div class="chart-box">
+                    <canvas id="chart3"></canvas>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <p id="dailyQuote" class="dashboard-quote">Loading inspiration...</p>
-          </article>
-        </section>
+            <button class="next-btn" type="button" aria-label="Next chart">→</button>
+          </div>
+        </article>
+      </section>
+
+      <section class="dashboard-full-width">
+        <article class="dashboard-panel quote-panel">
+          <div class="panel-header">
+            <div>
+              <p class="panel-eyebrow">Focus</p>
+              <h2>Momentum Quote</h2>
+            </div>
+          </div>
+
+          <div class="quote-content">
+            <span class="quote-mark">“</span>
+            <p id="dailyQuote" class="dashboard-quote">
+              Stay focused. Keep building momentum.
+            </p>
+            <span class="quote-mark closing">”</span>
+          </div>
+
+          <p id="quoteAuthor" class="quote-author"></p>
+        </article>
       </section>
     </main>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

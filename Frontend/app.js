@@ -325,7 +325,7 @@ function validateFutureDate(inputValue, inlineMsgEl) {
   }
 
   const now = new Date();
-  if (dateObj <= now) {
+   if (dateObj <= now) {
     inlineMsgEl.textContent = "Due date must be in the future.";
     return false;
   }
@@ -370,32 +370,47 @@ Purpose:
 Load tasks from the backend API, optionally applying the
 selected sort option, then render them in the Task Log.
 */
-async function fetchTasks() {
-  if (!tbody || !sortSelect) return;
+async function fetchTasks(sort = "") {
   try {
-    const sort = sortSelect.value;
-    const url = sort ? `/api/tasks?sort=${encodeURIComponent(sort)}` : "/api/tasks";
+    const url = sort
+      ? `/api/tasks?sort=${encodeURIComponent(sort)}`
+      : "/api/tasks";
 
-    const res = await fetch(url);
+    const res = await fetch(url, {
+      credentials: "include"
+    });
+
     const tasks = await res.json();
 
     if (!res.ok) {
       throw new Error(tasks.error || "Failed to load tasks.");
     }
 
-    renderTasks(tasks);
-    renderAssignmentCollections(tasks);
+    return tasks;
   } catch (err) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="5">Failed to load tasks.</td>
-      </tr>
-    `;
-    console.error(err);
+    console.error("fetchTasks error:", err);
+    return [];
   }
 }
 
+async function loadTaskTable() {
+  if (!tbody) return;
 
+  const sort = sortSelect ? sortSelect.value : "";
+  const tasks = await fetchTasks(sort);
+
+  if (!tasks.length) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="5">Lets make a Task! Welcome to Momentum</td>
+      </tr>
+    `;
+    return;
+  }
+
+  renderTasks(tasks);
+  renderAssignmentCollections(tasks);
+}
 
 
 
@@ -484,7 +499,7 @@ function renderTasks(tasks) {
   if (!tasks.length) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="5">No tasks found.</td>
+        <td colspan="5">Lets make a Task! Welcome to Momentum </td>
       </tr>
     `;
     return;
@@ -575,19 +590,20 @@ that make the dashboard feel intelligent and actionable.
 function renderDashboardInsights(tasks) {
   if (!insightsList) return;
 
-  if (!Array.isArray(tasks)) {
+  if (!Array.isArray(tasks) || tasks.length === 0) {
     insightsList.innerHTML = `<div class="insight-item">No insight data available yet.</div>`;
     return;
   }
 
   const now = new Date();
-  const todayKey = formatLocalDateKey(now);
 
   const completedTasks = tasks.filter(task => task.status === "Completed");
-  const completedToday = completedTasks.filter(task => {
-    if (!task.due_date) return false;
-    return String(task.due_date).startsWith(todayKey);
-  });
+  const pendingTasks = tasks.filter(task => task.status !== "Completed");
+  const overdueTasks = tasks.filter(task => task.is_overdue && task.status !== "Completed");
+  const highPriorityPending = tasks.filter(
+    task => task.status !== "Completed" && task.priority === "High"
+  );
+  const highEffortTasks = tasks.filter(task => task.effort_level === "High");
 
   const categoryCounts = {};
   tasks.forEach(task => {
@@ -613,20 +629,50 @@ function renderDashboardInsights(tasks) {
       )
     : 0;
 
-  const highPriorityPending = tasks.filter(
-    task => task.status !== "Completed" && task.priority === "High"
-  ).length;
+  const completionRate = tasks.length
+    ? Math.round((completedTasks.length / tasks.length) * 100)
+    : 0;
 
-  const insights = [
-    `You completed ${completedToday.length} task${completedToday.length === 1 ? "" : "s"} today 🔥`,
-    `Most active category: ${topCategory}`,
-    `Average planned task duration: ${avgDuration} min`,
-    highPriorityPending > 0
-      ? `${highPriorityPending} high-priority task${highPriorityPending === 1 ? "" : "s"} still need attention`
-      : "No high-priority tasks are currently waiting ✅"
-  ];
+  const upcomingSoon = tasks.filter(task => {
+    if (!task.due_date || task.status === "Completed") return false;
+
+    const due = new Date(task.due_date);
+    if (isNaN(due)) return false;
+
+    const diffMs = due - now;
+    const diffHours = diffMs / (1000 * 60 * 60);
+
+    return diffHours >= 0 && diffHours <= 48;
+  });
+
+  const insights = [];
+
+  insights.push(`Completion rate: ${completionRate}% of your tasks are finished.`);
+  insights.push(`Most active category: ${topCategory} (${topCategoryCount} task${topCategoryCount === 1 ? "" : "s"}).`);
+  insights.push(`Average planned task duration: ${avgDuration} min.`);
+
+  if (overdueTasks.length > 0) {
+    insights.push(`${overdueTasks.length} overdue task${overdueTasks.length === 1 ? "" : "s"} need immediate attention.`);
+  } else {
+    insights.push("No overdue tasks right now.");
+  }
+
+  if (highPriorityPending.length > 0) {
+    insights.push(`${highPriorityPending.length} high-priority task${highPriorityPending.length === 1 ? "" : "s"} are still open.`);
+  } else {
+    insights.push("No high-priority tasks are currently waiting.");
+  }
+
+  if (upcomingSoon.length > 0) {
+    insights.push(`${upcomingSoon.length} task${upcomingSoon.length === 1 ? "" : "s"} are due within the next 48 hours.`);
+  }
+
+  if (highEffortTasks.length > 0) {
+    insights.push(`${highEffortTasks.length} task${highEffortTasks.length === 1 ? "" : "s"} are marked high effort.`);
+  }
 
   insightsList.innerHTML = insights
+    .slice(0, 5)
     .map(insight => `<div class="insight-item">${insight}</div>`)
     .join("");
 }
@@ -670,7 +716,7 @@ async function markTaskComplete(task) {
       return;
     }
 
-    await fetchTasks();
+    await loadTaskTable();
     
     await loadDashboard();
 
@@ -736,7 +782,7 @@ async function undoCompleteTask(task, previousStatus = "Pending") {
       clearCreateMessageAfterDelay();
     }
 
-    await fetchTasks();
+    await loadTaskTable();
     loadDashboard();
     await refreshScheduleView();
   } catch (err) {
@@ -919,7 +965,7 @@ if (form) {
         msg.className = "message success";
       }
 
-      await fetchTasks();
+      await loadTaskTable();
       await refreshScheduleView();
       clearCreateMessageAfterDelay();
     } catch (err) {
@@ -1089,7 +1135,7 @@ async function handleDeleteTask(taskId, taskTitle) {
     msg.textContent = "Task deleted successfully.";
     msg.className = "message success";
 
-    await fetchTasks();
+    await loadTaskTable();
     await refreshScheduleView();
     clearCreateMessageAfterDelay();
   } catch (err) {
@@ -1186,7 +1232,7 @@ if (editForm) {
         notes
       };
 
-      await fetchTasks();
+      await loadTaskTable();
       await refreshScheduleView();
       highlightUpdatedFields(id, updatedTask);
       clearEditMessageAfterDelay();
@@ -1208,7 +1254,7 @@ if (cancelEditBtn) {
 
 // ---------- Sorting ----------
 if (sortSelect) {
-  sortSelect.addEventListener("change", fetchTasks);
+  sortSelect.addEventListener("change", loadTaskTable);
 }
 
 /*
@@ -1546,21 +1592,23 @@ function renderAssignmentCollections(tasks) {
 
 /**Extra Design Feature -- Loading Quote */
 
-async function loadQuote() {
+function loadDailyQuote() {
   const quoteEl = document.getElementById("dailyQuote");
-
   if (!quoteEl) return;
 
-  try {
-    const res = await fetch("https://api.quotable.io/random");
-    const data = await res.json();
+  const quotes = [
+    "Stay focused. Keep building momentum.",
+    "Small progress daily leads to big results.",
+    "Discipline beats motivation.",
+    "Consistency creates mastery.",
+    "Keep moving forward, one task at a time."
+  ];
 
-    quoteEl.textContent = `"${data.content}" — ${data.author}`;
-  } catch (err) {
-    console.error(err);
-    quoteEl.textContent = "Stay focused. Keep building momentum.";
-  }
+  const randomIndex = Math.floor(Math.random() * quotes.length);
+  quoteEl.textContent = quotes[randomIndex];
 }
+
+loadDailyQuote();
 
 
 /* USER STORY #5: AUTO Re-Fresh Story  */
@@ -2199,6 +2247,248 @@ function renderConflictAlerts(conflicts) {
 }
 
 
+
+// Design Feature Implementation -- Carousel + Charts
+// Design Feature Implementation -- Carousel + Charts
+
+document.addEventListener("DOMContentLoaded", async () => {
+  initDashboardGreeting();
+
+  if (document.getElementById("chart1")) {
+    await initDashboardCharts();
+  }
+
+  if (document.getElementById("taskTableBody")) {
+    await loadTaskTable();
+  }
+});
+
+function initDashboardGreeting() {
+  const titleEl = document.getElementById("dashboardTitle");
+  const welcomeEl = document.getElementById("dashboardWelcome");
+
+  if (!titleEl || !welcomeEl) return;
+
+  const savedUsername = localStorage.getItem("username");
+  const username = savedUsername?.trim() || "Momentum";
+  const formattedName = username.charAt(0).toUpperCase() + username.slice(1);
+
+  const hour = new Date().getHours();
+  let greeting = "Welcome back";
+  if (hour < 12) greeting = "Good morning";
+  else if (hour < 18) greeting = "Good afternoon";
+  else greeting = "Good evening";
+
+  titleEl.innerHTML = `<span class="dashboard-user-name">${formattedName}</span>'s Dashboard`;
+  welcomeEl.textContent = `${greeting}, ${formattedName}. Stay focused and keep your momentum going.`;
+}
+async function initDashboardCharts() {
+  const slidesContainer = document.querySelector(".slides");
+  const slidesWrapper = document.querySelector(".slides-wrapper");
+  const slides = document.querySelectorAll(".slide");
+  const nextBtn = document.querySelector(".next-btn");
+  const prevBtn = document.querySelector(".prev-btn");
+
+  const chart1El = document.getElementById("chart1");
+  const chart2El = document.getElementById("chart2");
+  const chart3El = document.getElementById("chart3");
+
+  if (
+    !slidesContainer ||
+    !slidesWrapper ||
+    !slides.length ||
+    !nextBtn ||
+    !prevBtn ||
+    !chart1El ||
+    !chart2El ||
+    !chart3El
+  ) {
+    return;
+  }
+
+  try {
+    const tasks = await fetchTasks();
+
+    const categoryData = getCategoryCounts(tasks);
+    const weekdayData = getTasksByWeekday(tasks);
+    const statusData = getStatusTrend(tasks);
+
+    const chart1 = new Chart(chart1El, {
+      type: "doughnut",
+      data: {
+        labels: categoryData.labels,
+        datasets: [{
+          data: categoryData.values,
+          backgroundColor: [
+            "rgba(96, 165, 250, 0.9)",
+            "rgba(244, 114, 182, 0.9)",
+            "rgba(251, 146, 60, 0.9)",
+            "rgba(139, 92, 246, 0.9)",
+            "rgba(34, 197, 94, 0.9)",
+            "rgba(250, 204, 21, 0.9)"
+          ],
+          borderColor: "rgba(255,255,255,0.08)",
+          borderWidth: 2,
+          hoverOffset: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        aspectRatio: 1,
+        cutout: "58%"
+      }
+    });
+
+    const chart2 = new Chart(chart2El, {
+      type: "bar",
+      data: {
+        labels: weekdayData.labels,
+        datasets: [{
+          label: "Tasks by Due Day",
+          data: weekdayData.values,
+          backgroundColor: [
+            "rgba(139, 92, 246, 0.85)",
+            "rgba(168, 85, 247, 0.85)",
+            "rgba(236, 72, 153, 0.85)",
+            "rgba(96, 165, 250, 0.85)",
+            "rgba(34, 197, 94, 0.85)",
+            "rgba(251, 146, 60, 0.85)",
+            "rgba(250, 204, 21, 0.85)"
+          ],
+          borderRadius: 12,
+          borderSkipped: false,
+          maxBarThickness: 42
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false
+      }
+    });
+
+    const chart3 = new Chart(chart3El, {
+      type: "line",
+      data: {
+        labels: statusData.labels,
+        datasets: [{
+          label: "Task Status Overview",
+          data: statusData.values,
+          borderColor: "rgba(96, 165, 250, 0.95)",
+          backgroundColor: "rgba(96, 165, 250, 0.18)",
+          fill: true,
+          tension: 0.4,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          pointBackgroundColor: "#ffffff",
+          pointBorderColor: "rgba(96, 165, 250, 0.95)",
+          pointBorderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false
+      }
+    });
+
+    const charts = [chart1, chart2, chart3];
+    let currentSlide = 0;
+
+    function updateSlide() {
+      const slideWidth = slidesWrapper.clientWidth;
+      slidesContainer.style.transform = `translateX(-${currentSlide * slideWidth}px)`;
+
+      setTimeout(() => {
+        charts[currentSlide].resize();
+        charts[currentSlide].update();
+      }, 350);
+    }
+
+    nextBtn.addEventListener("click", () => {
+      currentSlide = (currentSlide + 1) % slides.length;
+      updateSlide();
+    });
+
+    prevBtn.addEventListener("click", () => {
+      currentSlide = (currentSlide - 1 + slides.length) % slides.length;
+      updateSlide();
+    });
+
+    updateSlide();
+  } catch (error) {
+    console.error("Failed to load chart data:", error);
+  }
+}
+
+
+
+
+function getCategoryCounts(tasks) {
+  const counts = {};
+
+  tasks.forEach(task => {
+    const category = task.category || "Uncategorized";
+    counts[category] = (counts[category] || 0) + 1;
+  });
+
+  return {
+    labels: Object.keys(counts),
+    values: Object.values(counts)
+  };
+}
+
+function getTasksByWeekday(tasks) {
+  const weekdayCounts = {
+    Sun: 0,
+    Mon: 0,
+    Tue: 0,
+    Wed: 0,
+    Thu: 0,
+    Fri: 0,
+    Sat: 0
+  };
+
+  tasks.forEach(task => {
+    if (!task.due_date) return;
+
+    const date = new Date(task.due_date);
+    if (isNaN(date)) return;
+
+    const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const day = dayNames[date.getDay()];
+    weekdayCounts[day]++;
+  });
+
+  return {
+    labels: Object.keys(weekdayCounts),
+    values: Object.values(weekdayCounts)
+  };
+}
+
+function getStatusTrend(tasks) {
+  const statusCounts = {
+    Pending: 0,
+    "In Progress": 0,
+    Completed: 0,
+    "Not Started": 0
+  };
+
+  tasks.forEach(task => {
+    const status = task.status || "Pending";
+
+    if (statusCounts[status] !== undefined) {
+      statusCounts[status]++;
+    } else {
+      statusCounts[status] = 1;
+    }
+  });
+
+  return {
+    labels: Object.keys(statusCounts),
+    values: Object.values(statusCounts)
+  };
+}
+
 function closeIntroOverlay() {
   if (!introOverlay) return;
   introOverlay.classList.add("fade-out");
@@ -2228,7 +2518,6 @@ if (tbody && sortSelect) {
 }
 
 loadDashboard();
-loadQuote();
 initDatePickers();
 
 const orbCanvas = document.getElementById("momentumOrbCanvas");

@@ -90,7 +90,7 @@
       const message = document.getElementById("loginMessage");
       const togglePasswordBtn = document.getElementById("togglePasswordBtn");
       const passwordInput = document.getElementById("password");
-
+    
       if (togglePasswordBtn && passwordInput) {
         togglePasswordBtn.addEventListener("click", () => {
           const isHidden = passwordInput.type === "password";
@@ -98,16 +98,16 @@
           togglePasswordBtn.textContent = isHidden ? "Hide" : "Show";
         });
       }
-
+    
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
-
+    
         const username = document.getElementById("username").value.trim();
         const password = passwordInput.value.trim();
-
+    
         message.textContent = "";
         message.className = "message";
-
+    
         try {
           const res = await fetch("/api/login", {
             method: "POST",
@@ -115,15 +115,17 @@
             credentials: "include",
             body: JSON.stringify({ username, password })
           });
-
+    
           const data = await res.json();
-
+    
           if (res.ok) {
+            localStorage.setItem("username", username);
+    
             message.textContent = "✓ Login successful!";
             message.classList.add("success");
-
+    
             setTimeout(() => {
-              window.location.href = "/dashboard.html";
+              window.location.href = "/loading.html";
             }, 500);
           } else {
             message.textContent = data.error || "Login failed.";
