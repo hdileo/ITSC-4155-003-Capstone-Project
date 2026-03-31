@@ -1,6 +1,6 @@
 """
 ========================================================
-ROUTES.PY OVERVIEW — MOMENTUM APPLICATION
+ROUTES.PY OVERVIEW — MOMENTUM APPLICATION | Disclaimer -- Ariticial Intelligence was used to ORGANIZE Our NOTES, FIX BUGS, and WORK WITH INDENTATION ISSUES
 ========================================================
 
 Purpose:

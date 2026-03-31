@@ -6,6 +6,13 @@ from datetime import datetime, timedelta
 from backend.app import create_app
 
 
+'''
+    This File Contains all Our Application Testing -- Ranging from Unit Testing, to Integrated Testing, and BlackBox Testing
+    They are Organized Based on the Tests in Sections Below
+
+
+'''
+
 class ApiTests(unittest.TestCase):
 
     def setUp(self):
@@ -643,6 +650,168 @@ class ApiTests(unittest.TestCase):
 
         for day_key, tasks in schedule.items():
             self.assertLessEqual(len(tasks), 3)
+
+    
+    
+    
+    
+    
+    ########## THis Section is More of Our Integrated Tests ##########
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+     #Thse Our Integrated Tests -- Create then Get Tasks        
+
+    def test_create_task_then_get_tasks(self):
+        self.login()
+        create_res = self.client.post("/api/tasks", json={
+        "title": "Study Networking",
+        "due_date": "2026-04-10 18:00",
+        "priority": "High",
+        "duration_minutes": 60,
+        "effort_level": "High",
+        "start_after": None,
+        "category": "School",
+        "description": "Review chapters",
+        "notes": "Focus on routing"
+    })
+
+        self.assertEqual(create_res.status_code, 201)
+
+        get_res = self.client.get("/api/tasks")
+        self.assertEqual(get_res.status_code, 200)
+
+        tasks = get_res.get_json()
+        self.assertEqual(len(tasks), 1)
+        self.assertEqual(tasks[0]["title"], "Study Networking")
+        self.assertEqual(tasks[0]["priority"], "High")
+
+
+    #Intgerated Test #2 -- Edit Then Get Updated Tasks in Schedule        
+
+    def test_edit_task_then_get_updated_task(self):
+        self.login()
+        create_res = self.client.post("/api/tasks", json={
+        "title": "Old Title",
+        "due_date": "2026-04-10 18:00",
+        "priority": "Medium",
+        "duration_minutes": 60,
+        "effort_level": "Medium",
+        "start_after": None,
+        "category": "General",
+        "description": "",
+        "notes": ""
+    })
+        self.assertEqual(create_res.status_code, 201)
+
+        task_id = create_res.get_json()["id"]
+
+        update_res = self.client.put(f"/api/tasks/{task_id}", json={
+        "title": "Updated Title",
+        "due_date": "2026-04-11 19:00",
+        "priority": "High",
+        "status": "In Progress",
+        "duration_minutes": 90,
+        "effort_level": "High",
+        "start_after": None,
+        "category": "School",
+        "description": "Updated description",
+        "notes": "Updated notes"
+    })
+        self.assertEqual(update_res.status_code, 200)
+
+        get_res = self.client.get("/api/tasks")
+        tasks = get_res.get_json()
+
+        updated_task = next(t for t in tasks if t["id"] == task_id)
+        self.assertEqual(updated_task["title"], "Updated Title")
+        self.assertEqual(updated_task["priority"], "High")
+        self.assertEqual(updated_task["status"], "In Progress")
+
+    
+    #Integrate #3 -- Delete Task + Confirms This is not in the schedule anymore
+    def test_delete_task_then_confirm_removed(self):
+        self.login()
+        create_res = self.client.post("/api/tasks", json={
+        "title": "Delete Me",
+        "due_date": "2026-04-10 18:00",
+        "priority": "Low",
+        "duration_minutes": 30,
+        "effort_level": "Low",
+        "start_after": None,
+        "category": "Personal",
+        "description": "",
+        "notes": ""
+    })
+        self.assertEqual(create_res.status_code, 201)
+
+        task_id = create_res.get_json()["id"]
+
+        delete_res = self.client.delete(f"/api/tasks/{task_id}")
+        self.assertEqual(delete_res.status_code, 200)
+
+        get_res = self.client.get("/api/tasks")
+        tasks = get_res.get_json()
+
+        self.assertFalse(any(t["task_id"] == task_id for t in tasks))
+
+    
+    #Intgegrates Test #4: Creating Schedule with Different Priorities
+    def test_schedule_prioritizes_higher_effort_when_due_date_and_priority_match(self):
+        self.login()
+        self.client.post("/api/tasks", json={
+        "title": "High Effort Task",
+        "due_date": "2026-04-01 17:00",
+        "priority": "Medium",
+        "duration_minutes": 60,
+        "effort_level": "High",
+        "start_after": None,
+        "category": "School",
+        "description": "",
+        "notes": ""
+    })
+
+        self.client.post("/api/tasks", json={
+        "title": "Low Effort Task",
+        "due_date": "2026-04-01 17:00",
+        "priority": "Medium",
+        "duration_minutes": 60,
+        "effort_level": "Low",
+        "start_after": None,
+        "category": "School",
+        "description": "",
+        "notes": ""
+    })
+
+        schedule_res = self.client.post("/api/schedule", json={
+            "days": 7,
+            "max_tasks_per_day": 4
+    })
+
+        self.assertEqual(schedule_res.status_code, 200)
+        data = schedule_res.get_json()
+
+        all_scheduled = []
+        for day_tasks in data["schedule"].values():
+            all_scheduled.extend(day_tasks)
+
+        titles = [task["title"] for task in all_scheduled]
+
+        self.assertLess(
+            titles.index("High Effort Task"),
+            titles.index("Low Effort Task")
+        )
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 """
 ========================================================
-USER STORY → FUNCTION MAPPING (Momentum Backend)
+USER STORY → FUNCTION MAPPING (Momentum Backend) -- Ariticial Intelligence was used to ORGANIZE Our NOTES, FIX BUGS, and WORK WITH INDENTATION ISSUES
 ========================================================
 
 -------------------------------
@@ -606,7 +606,7 @@ def generate_schedule(days=7, max_tasks_per_day=4):
     effort_order = {"High": 0, "Medium": 1, "Low": 2}
 
     today = datetime.now().date()
-    end_date = today + timedelta(days = days - 1)
+    end_date = today + timedelta(days=days - 1)
 
     filtered_tasks = []
 
@@ -620,15 +620,13 @@ def generate_schedule(days=7, max_tasks_per_day=4):
         start_after_dt = parse_task_datetime(task.get("start_after"))
         start_after_date = start_after_dt.date() if start_after_dt else today
 
-        # Only include tasks due within selected range
-        # and allowed to start within that range
         if today <= task_due <= end_date and start_after_date <= end_date:
             filtered_tasks.append(task)
 
     # Sort by due date, priority, then effort
     filtered_tasks.sort(
         key=lambda t: (
-            t["due_date"],
+            parse_task_datetime(t["due_date"]),
             priority_order.get(t["priority"], 99),
             effort_order.get(t["effort_level"], 99)
         )
@@ -638,13 +636,17 @@ def generate_schedule(days=7, max_tasks_per_day=4):
     tasks_per_day = {}
 
     for task in filtered_tasks:
+        due_dt = parse_task_datetime(task.get("due_date"))
+        due_day = due_dt.date() if due_dt else end_date
+
         start_after_dt = parse_task_datetime(task.get("start_after"))
         earliest_day = max(today, start_after_dt.date()) if start_after_dt else today
+        latest_day = min(due_day, end_date)
 
         assigned_day = None
         current_day = earliest_day
 
-        while current_day <= end_date:
+        while current_day <= latest_day:
             day_key = current_day.strftime("%Y-%m-%d")
             count = tasks_per_day.get(day_key, 0)
 
@@ -654,7 +656,6 @@ def generate_schedule(days=7, max_tasks_per_day=4):
 
             current_day += timedelta(days=1)
 
-        # If no available day exists in the selected range, skip the task
         if not assigned_day:
             continue
 

@@ -1,6 +1,6 @@
 import sqlite3
 from flask import current_app
-
+#Ariticial Intelligence was used to ORGANIZE Our NOTES, FIX BUGS, and WORK WITH INDENTATION ISSUES
 
 # Purpose:
 # This file sets up and manages the SQLite database schema

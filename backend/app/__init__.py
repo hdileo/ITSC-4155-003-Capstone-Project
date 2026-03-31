@@ -1,9 +1,10 @@
 from flask import Flask
 from .database import init_db
 
-
+#Ariticial Intelligence was used to ORGANIZE Our NOTES, FIX BUGS, and WORK WITH INDENTATION ISSUES
 # Purpose:
 # Initializes the Flask application and configures the app
+
 
 
 def create_app(test_config=None):

@@ -140,6 +140,10 @@
  *               orb canvas shrinks to 320px height.
  * ============================================================
  */
+
+
+
+ /*  Artiifical Inteligence was used fo FIx Bugs | Organize  notes | and More    */
 :root {
 	--primary: #2563EB;
 	--primary-hover: #1D4ED8;
@@ -2646,7 +2650,7 @@ button {
 	from { transform: rotate(0deg); }
 	to { transform: rotate(360deg); }
   }
-  
+
   @keyframes orbSpin {
 	from {
 	  transform: rotate(0deg);
@@ -5167,4 +5171,56 @@ button {
 	50% {
 	  transform: translateY(-16px) translateX(-12px);
 	}
+  }
+
+  .calendar-day-body {
+	position: relative;
+  }
+  
+  .calendar-event-block {
+	position: absolute;
+	overflow: hidden;
+	z-index: 2;
+  }
+  
+  .calendar-event-block:hover {
+	z-index: 20;
+	overflow: visible;
+  }
+  
+  .calendar-event-tooltip {
+	position: absolute;
+	left: 0;
+	top: calc(100% + 8px);
+	min-width: 240px;
+	max-width: 300px;
+	padding: 12px 14px;
+	border-radius: 14px;
+	background: rgba(20, 18, 40, 0.96);
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
+	color: rgba(255, 255, 255, 0.9);
+	font-size: 0.82rem;
+	line-height: 1.45;
+	opacity: 0;
+	pointer-events: none;
+	transform: translateY(6px);
+	transition: opacity 0.18s ease, transform 0.18s ease;
+	backdrop-filter: blur(10px);
+  }
+  
+  .calendar-event-block:hover .calendar-event-tooltip {
+	opacity: 1;
+	transform: translateY(0);
+  }
+  
+  .calendar-event-tooltip strong {
+	display: block;
+	margin-bottom: 4px;
+	color: #fff;
+	font-size: 0.9rem;
+  }
+  
+  .calendar-event-tooltip div + div {
+	margin-top: 3px;
   }

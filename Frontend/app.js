@@ -151,6 +151,17 @@ ARCHITECTURE NOTE
 ========================================================
 */
 
+/*
+
+Artificial Intelligence Was Used Here To Organize Notes -- Fix Bugs - and More
+
+
+*/
+
+
+
+
+
 
 // --- Task Creation Elements ---
 const form = document.getElementById("taskForm");
@@ -279,6 +290,9 @@ function formatLocalDateKey(date) {
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
+
+
+
 
 function detectScheduleConflicts(tasks) {
   const conflicts = new Set();
@@ -1323,6 +1337,80 @@ across the upcoming days.
 ========================================================
 */
 
+function getEventLayout(tasksForDay) {
+  const events = tasksForDay.map(task => {
+    const start = parseTimeToMinutes(task.scheduled_start);
+    const end = parseTimeToMinutes(task.scheduled_end);
+    return { ...task, _start: start, _end: end };
+  });
+
+  events.sort((a, b) => a._start - b._start || a._end - b._end);
+
+  const groups = [];
+  let currentGroup = [];
+  let currentGroupEnd = -1;
+
+  for (const event of events) {
+    if (currentGroup.length === 0 || event._start < currentGroupEnd) {
+      currentGroup.push(event);
+      currentGroupEnd = Math.max(currentGroupEnd, event._end);
+    } else {
+      groups.push(currentGroup);
+      currentGroup = [event];
+      currentGroupEnd = event._end;
+    }
+  }
+
+  if (currentGroup.length) groups.push(currentGroup);
+
+  const laidOut = [];
+
+  groups.forEach(group => {
+    const columns = [];
+
+    group.forEach(event => {
+      let placed = false;
+
+      for (let col = 0; col < columns.length; col++) {
+        const lastInColumn = columns[col][columns[col].length - 1];
+        if (event._start >= lastInColumn._end) {
+          columns[col].push(event);
+          event._column = col;
+          placed = true;
+          break;
+        }
+      }
+
+      if (!placed) {
+        event._column = columns.length;
+        columns.push([event]);
+      }
+    });
+
+    const totalColumns = columns.length;
+    group.forEach(event => {
+      event._totalColumns = totalColumns;
+      laidOut.push(event);
+    });
+  });
+
+  return laidOut;
+}
+
+function buildTaskTooltip(task) {
+  return `
+    <div><strong>${task.title || "Untitled Task"}</strong></div>
+    <div>Status: ${task.status || "Pending"}</div>
+    <div>Priority: ${task.priority || "None"}</div>
+    <div>Effort: ${task.effort_level || "None"}</div>
+    <div>Category: ${task.category || "General"}</div>
+    <div>Due: ${task.due_date || "No due date"}</div>
+    <div>Duration: ${task.duration_minutes || 60} min</div>
+    ${task.description ? `<div>Description: ${task.description}</div>` : ""}
+    ${task.notes ? `<div>Notes: ${task.notes}</div>` : ""}
+  `.trim();
+}
+
 
 
 
@@ -1424,54 +1512,60 @@ if (conflictOutput) {
     } else {
       hasAnyTasks = true;
 
-      tasksForDay.forEach((task) => {
-        let statusClass = "status-pending";
-        if (task.status === "In Progress") statusClass = "status-progress";
-        if (task.status === "Completed") statusClass = "status-completed";
+      const laidOutTasks = getEventLayout(tasksForDay);
 
-        let priorityClass = "priority-low";
-        if (task.priority === "High") priorityClass = "priority-high";
-        if (task.priority === "Medium") priorityClass = "priority-medium";
+laidOutTasks.forEach((task) => {
+  let statusClass = "status-pending";
+  if (task.status === "In Progress") statusClass = "status-progress";
+  if (task.status === "Completed") statusClass = "status-completed";
 
-        const startMinutes = parseTimeToMinutes(task.scheduled_start);
-        const endMinutes = parseTimeToMinutes(task.scheduled_end);
+  let priorityClass = "priority-low";
+  if (task.priority === "High") priorityClass = "priority-high";
+  if (task.priority === "Medium") priorityClass = "priority-medium";
 
-        const top = ((startMinutes - startHour * 60) / 60) * hourHeight;
-        const height = ((endMinutes - startMinutes) / 60) * hourHeight;
+  const startMinutes = task._start;
+  const endMinutes = task._end;
 
-        const taskBlock = document.createElement("div");
-        taskBlock.className = "calendar-event-block";
+  const top = ((startMinutes - startHour * 60) / 60) * hourHeight;
+  const height = ((endMinutes - startMinutes) / 60) * hourHeight;
 
-        if (conflictingTaskIds.has(task.id)) {
-          taskBlock.classList.add("conflict-task");
-        }
+  const gap = 6;
+  const widthCalc = `calc((100% - ${(task._totalColumns - 1) * gap}px) / ${task._totalColumns})`;
+  const leftCalc = `calc(${task._column} * (${widthCalc} + ${gap}px))`;
 
-        taskBlock.style.top = `${top}px`;
-        taskBlock.style.height = `${Math.max(height, 54)}px`;
-        if (height < 90) {
-          taskBlock.classList.add("compact");
-        }
-        
-        if (height < 68) {
-          taskBlock.classList.add("micro");
-        }
+  const taskBlock = document.createElement("div");
+  taskBlock.className = "calendar-event-block";
+  taskBlock.style.top = `${top}px`;
+  taskBlock.style.height = `${Math.max(height, 54)}px`;
+  taskBlock.style.width = widthCalc;
+  taskBlock.style.left = leftCalc;
 
-        taskBlock.innerHTML = `
-          ${conflictingTaskIds.has(task.id) ? '<div class="conflict-label">CONFLICT</div>' : ""}
-          <div class="calendar-event-time">${task.scheduled_start} – ${task.scheduled_end}</div>
-          <div class="calendar-event-title">${task.title}</div>
-          <div class="calendar-event-meta">
-            <span class="status-badge ${statusClass}">${task.status}</span>
-            <span class="priority-pill ${priorityClass}">${task.priority}</span>
-          </div>
-          <div class="calendar-event-meta secondary">
-            <span class="task-meta-pill">${task.effort_level} Effort</span>
-            <span class="task-meta-pill">${task.category}</span>
-          </div>
-        `;
+  if (conflictingTaskIds.has(task.id)) {
+    taskBlock.classList.add("conflict-task");
+  }
 
-        body.appendChild(taskBlock);
-      });
+  if (height < 90) taskBlock.classList.add("compact");
+  if (height < 68) taskBlock.classList.add("micro");
+
+  taskBlock.innerHTML = `
+    ${conflictingTaskIds.has(task.id) ? '<div class="conflict-label">CONFLICT</div>' : ""}
+    <div class="calendar-event-time">${task.scheduled_start} – ${task.scheduled_end}</div>
+    <div class="calendar-event-title">${task.title}</div>
+    <div class="calendar-event-meta">
+      <span class="status-badge ${statusClass}">${task.status}</span>
+      <span class="priority-pill ${priorityClass}">${task.priority}</span>
+    </div>
+    <div class="calendar-event-meta secondary">
+      <span class="task-meta-pill">${task.effort_level} Effort</span>
+      <span class="task-meta-pill">${task.category}</span>
+    </div>
+    <div class="calendar-event-tooltip">
+      ${buildTaskTooltip(task)}
+    </div>
+  `;
+
+  body.appendChild(taskBlock);
+});
     }
 
     dayColumn.appendChild(body);
