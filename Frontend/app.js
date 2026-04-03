@@ -199,8 +199,8 @@ const insightsList = document.getElementById("insightsList");
 
 
 /* ========================================================
-   SECTION: Shared State
-   Purpose: Store temporary values used across actions.
+  SECTION: Shared State
+  Purpose: Store temporary values used across actions.
 ======================================================== */
 
 
@@ -211,9 +211,9 @@ let originalTaskData = null;
 
 
 /* ========================================================
-   SECTION: Utility Functions
-   Purpose: Small reusable helpers for formatting dates,
-   times, and keys used by tasks and schedules.
+  SECTION: Utility Functions
+  Purpose: Small reusable helpers for formatting dates,
+  times, and keys used by tasks and schedules.
 ======================================================== */
 
 //Method which formats our Backend Data into the Format Which we See On Our Schedule and Task List 
@@ -411,14 +411,26 @@ async function loadTaskTable() {
   if (!tbody) return;
 
   const sort = sortSelect ? sortSelect.value : "";
-  const tasks = await fetchTasks(sort);
+  let tasks = await fetchTasks(sort); // Original fetch line
+
+  // --- SEARCH FILTERING LOGIC ---
+  const searchInput = document.querySelector('input[placeholder*="Search tasks"]');
+  const searchTerm = searchInput ? searchInput.value.toLowerCase() : "";
+
+  if (searchTerm) {
+    tasks = tasks.filter(task => {
+      return (
+        task.title.toLowerCase().includes(searchTerm) ||
+        (task.category && task.category.toLowerCase().includes(searchTerm)) ||
+        (task.notes && task.notes.toLowerCase().includes(searchTerm)) ||
+        (task.description && task.description.toLowerCase().includes(searchTerm))
+      );
+    });
+  }
+  // --- END OF SEARCH LOGIC ---
 
   if (!tasks.length) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="5">Lets make a Task! Welcome to Momentum</td>
-      </tr>
-    `;
+    tbody.innerHTML = `<tr><td colspan="5">No tasks found matching "${searchTerm}".</td></tr>`;
     return;
   }
 
@@ -693,9 +705,9 @@ function renderDashboardInsights(tasks) {
 
 
 /* ========================================================
-   SECTION: Task Completion Workflow
-   Purpose: Mark tasks as completed, support undo, and keep
-   the task list, dashboard, and schedule in sync.
+  SECTION: Task Completion Workflow
+  Purpose: Mark tasks as completed, support undo, and keep
+  the task list, dashboard, and schedule in sync.
 ======================================================== */
 
 
@@ -1109,9 +1121,9 @@ function closeEditForm() {
 
 
 /* ========================================================
-   SECTION: Task Deletion
-   Purpose: Confirm deletion, remove the task from the backend,
-   and refresh the task and schedule views.
+  SECTION: Task Deletion
+  Purpose: Confirm deletion, remove the task from the backend,
+  and refresh the task and schedule views.
 ======================================================== */
 
 
@@ -1164,9 +1176,9 @@ async function handleDeleteTask(taskId, taskTitle) {
 
 
 /* ========================================================
-   SECTION: Task Editing
-   Purpose: Open the edit form, preload task data, submit
-   updates, and refresh the UI after changes.
+  SECTION: Task Editing
+  Purpose: Open the edit form, preload task data, submit
+  updates, and refresh the UI after changes.
 ======================================================== */
 
 
@@ -1290,6 +1302,7 @@ function getCompletedTasks(tasks) {
 
 
 
+
 /** User Story #6: Schedule Generation  */
 
 
@@ -1297,8 +1310,8 @@ function getCompletedTasks(tasks) {
 
 
 /* ========================================================
-   SECTION: Schedule View References
-   Purpose: Cache schedule page controls and output areas.
+  SECTION: Schedule View References
+  Purpose: Cache schedule page controls and output areas.
 ======================================================== */
 
 
@@ -2607,6 +2620,14 @@ if (introOverlay) {
 
 
 // ---------- Initial load ----------
+// THE TRIGGER:
+const taskSearchField = document.querySelector('input[placeholder*="3190"]');
+if (taskSearchField) {
+  taskSearchField.addEventListener("input", () => {
+    loadTaskTable(); 
+  });
+}
+
 if (tbody && sortSelect) {
   fetchTasks();
 }
