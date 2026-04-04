@@ -200,6 +200,80 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(tasks[1]["title"], "Task B")
         self.assertEqual(tasks[2]["title"], "Task C")
 
+    
+    # Tests that tasks overflow to the next day when daily limit is reached
+
+    def test_schedule_overflow_to_next_day(self):
+        self.login()
+
+        now = datetime.now()
+
+        for i in range(3):
+            due_date = (now + timedelta(days=1)).strftime("%Y-%m-%d %H:%M")
+
+            self.client.post("/api/tasks", json={
+                "title": f"Overflow Task {i}",
+                "due_date": due_date,
+                "priority": "High",
+                "duration_minutes": 60,
+                "effort_level": "Medium",
+                "start_after": "",
+                "category": "General",
+                "description": "",
+                "notes": ""
+            })
+
+        res = self.client.post("/api/schedule", json={
+            "days": 3,
+            "max_tasks_per_day": 1
+        })
+
+        self.assertEqual(res.status_code, 200)
+
+        schedule = res.get_json()["schedule"]
+        days = list(schedule.keys())
+
+        self.assertEqual(len(schedule[days[0]]), 1)
+        self.assertEqual(len(schedule[days[1]]), 1)
+
+
+    
+    # Tests that tasks are not scheduled before their start_after time
+    
+    def test_start_after_prevents_early_scheduling(self):
+        self.login()
+
+        future_start = (datetime.now() + timedelta(days=10)).strftime("%Y-%m-%d %H:%M")
+        due_date = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d %H:%M")
+
+        self.client.post("/api/tasks", json={
+            "title": "Future Locked Task",
+            "due_date": due_date,
+            "priority": "High",
+            "duration_minutes": 60,
+            "effort_level": "Medium",
+            "start_after": future_start,
+            "category": "General",
+            "description": "",
+            "notes": ""
+        })
+
+        res = self.client.post("/api/schedule", json={
+            "days": 5,
+            "max_tasks_per_day": 2
+        })
+
+        self.assertEqual(res.status_code, 200)
+
+        schedule = res.get_json()["schedule"]
+
+        all_tasks = []
+        for day in schedule.values():
+            all_tasks.extend(day)
+
+        self.assertEqual(len(all_tasks), 0)
+
+    
     # Unit Test for Duration Based Scheduling
     def test_duration_based_scheduling(self):
         self.login()
