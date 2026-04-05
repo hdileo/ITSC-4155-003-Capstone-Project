@@ -40,7 +40,7 @@ class ApiTests(unittest.TestCase):
             "username": "admin",
             "password": "momentum123"
         })
-
+    #User Story 1
     def test_create_and_list_tasks(self):
         self.login()
 
@@ -62,7 +62,7 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(data[0]["status"], "Pending")
         self.assertEqual(data[0]["due_date"], "2026-03-01 23:59")
         self.assertEqual(data[0]["priority"], "High")
-
+    #User Story #2
     def test_edit_task(self):
         self.login()
 
@@ -97,7 +97,7 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(data[0]["title"], "Finish Sprint Report (Updated)")
         self.assertEqual(data[0]["priority"], "Medium")
         self.assertEqual(data[0]["status"], "Not Started")
-
+    #User Story #3
     def test_delete_task(self):
         self.login()
 
@@ -133,7 +133,8 @@ class ApiTests(unittest.TestCase):
 
         self.assertEqual(data["message"], "No tasks available to schedule.")
         self.assertEqual(data["schedule"], {})
-
+    
+    #User Story #4
     def test_generate_schedule_sorts_by_due_date_and_priority(self):
         self.login()
 
@@ -201,7 +202,7 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(tasks[2]["title"], "Task C")
 
     
-    # Tests that tasks overflow to the next day when daily limit is reached
+    # Tests that tasks overflow to the next day when daily limit is reached( User Story #90)
 
     def test_schedule_overflow_to_next_day(self):
         self.login()
@@ -237,7 +238,8 @@ class ApiTests(unittest.TestCase):
 
         self.assertEqual(len(schedule[days[0]]), 2)
         self.assertEqual(len(schedule[days[1]]), 1)
-
+    
+    #User Story 4( Schedule Auto Refresh)
     def test_schedule_auto_refresh_after_task_completion(self):
         """
         USER STORY: Schedule Auto Refresh after task completion
@@ -303,9 +305,94 @@ class ApiTests(unittest.TestCase):
             all_titles_after.extend([task["title"] for task in day_tasks])
 
         self.assertNotIn("Refresh Test Task", all_titles_after)
+    
+
+    #User Story: Search Bar Testing Feature
+    def test_search_tasks_backend_story(self):
+        """
+        USER STORY: Search Tasks (Backend Approximation)
+        """
+
+        self.login()
+
+        future_date = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d %H:%M")
+
+        tasks = [
+        {"title": "Math Homework", "category": "School"},
+        {"title": "Gym Workout", "category": "Health"},
+        {"title": "Project Report", "category": "Work"}
+        ]
+
+        for task in tasks:
+            res = self.client.post("/api/tasks", json={
+            "title": task["title"],
+            "due_date": future_date,
+            "priority": "Medium",
+            "duration_minutes": 60,
+            "effort_level": "Medium",
+            "start_after": "",
+            "category": task["category"],
+            "description": "",
+            "notes": ""
+            })
+            self.assertEqual(res.status_code, 201)
+
+        # Simulate search by filtering response
+        res = self.client.get("/api/tasks")
+        self.assertEqual(res.status_code, 200)
+
+        all_tasks = res.get_json()
+
+        # "Search" for keyword
+        search_term = "math"
+
+        filtered = [
+            t for t in all_tasks
+            if search_term in (t["title"] or "").lower()
+            or search_term in (t["category"] or "").lower()
+        ]
+
+        self.assertEqual(len(filtered), 1)
+        self.assertEqual(filtered[0]["title"], "Math Homework")
 
     
-    # Tests that tasks are not scheduled before their start_after time
+    
+    #Test for User Story -- OverDue Task Highlighting
+    def test_overdue_task_highlighting_story(self):
+        """
+        USER STORY: Overdue Task Highlighting
+        """
+
+        self.login()
+
+        past_date = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d %H:%M")
+
+        create_res = self.client.post("/api/tasks", json={
+        "title": "Past Due Task",
+        "due_date": past_date,
+        "priority": "High",
+        "duration_minutes": 60,
+        "effort_level": "Medium",
+        "start_after": "",
+        "category": "School",
+        "description": "",
+        "notes": ""
+        })
+        self.assertEqual(create_res.status_code, 201)
+
+        list_res = self.client.get("/api/tasks")
+        self.assertEqual(list_res.status_code, 200)
+
+        tasks = list_res.get_json()
+        self.assertTrue(len(tasks) > 0)
+
+        overdue_task = next((task for task in tasks if task["title"] == "Past Due Task"), None)
+
+        self.assertIsNotNone(overdue_task)
+        self.assertTrue(overdue_task["is_overdue"])
+
+    
+    # Schedule 88: Earliest Start Date Restriction
     
     def test_start_after_prevents_early_scheduling(self):
         self.login()
@@ -340,7 +427,7 @@ class ApiTests(unittest.TestCase):
 
         self.assertEqual(len(all_tasks), 0)
 
-    
+    #Test fo Task Duration Scheduling(User Story 86)
     def test_duration_based_scheduling(self):
         self.login()
 
@@ -391,7 +478,9 @@ class ApiTests(unittest.TestCase):
             hours = 0
 
         return hours * 60 + minutes
+    
 
+    #Unit Test for Category Distribution
     def test_category_based_task_distribution_story(self):
         """
         USER STORY: Category-Based Task Distribution
@@ -665,7 +754,9 @@ class ApiTests(unittest.TestCase):
         data = res.get_json()
         self.assertEqual(data["message"], "No tasks available to schedule.")
         self.assertEqual(data["schedule"], {})
+    
 
+    #Unit Test for User Story Schedule Time Display
     def test_task_duration_scheduling_story(self):
         """
         USER STORY: Task Duration Scheduling
