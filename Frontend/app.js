@@ -2024,7 +2024,7 @@ function renderCapacityConflicts(capacityConflicts, unscheduledTasks) {
 
   let html = `
     <div class="capacity-conflict-section">
-      <div class="capacity-conflict-title">Capacity Issues</div>
+      <div class="capacity-conflict-title">Conflict Detection</div>
       <div class="capacity-conflict-main">
         ${conflict.message}
       </div>
@@ -2478,7 +2478,7 @@ function renderConflictAlerts(conflicts) {
   if (!conflictOutput) return;
 
   if (!conflicts.length) {
-    conflictOutput.innerHTML = `<p>No conflicts detected.</p>`;
+    conflictOutput.innerHTML = `<p>Conflicts Listed</p>`;
     return;
   }
 
