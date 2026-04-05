@@ -1,3 +1,55 @@
+"""
+========================================================
+UNIT TEST COVERAGE MAP — MOMENTUM APPLICATION
+========================================================
+
+Purpose:
+This test suite validates that each major user story
+implemented in the Momentum application is supported
+by at least one automated unit test.
+
+Each user story listed below is mapped to one or more
+test cases to ensure functionality, correctness, and
+alignment with acceptance criteria.
+
+--------------------------------------------------------
+USER STORY → UNIT TEST MAPPING
+--------------------------------------------------------
+
+TASK MANAGEMENT
+- Create Task → test_create_task_story
+- View Tasks → test_get_tasks
+- Edit Task → test_update_task
+- Delete Task → test_delete_task
+
+SEARCH FUNCTIONALITY
+- Search Tasks → test_search_tasks_backend_story
+- Case-Insensitive Search → test_search_case_insensitive
+
+SCHEDULING ENGINE
+- Generate Schedule → test_generate_schedule
+- Duration-Based Scheduling/Schedule Time Display → test_duration_based_scheduling
+- Task Duration Scheduling Story/Schedule Time Display → test_task_duration_scheduling_story
+- Effort-Level Scheduling → test_schedule_prioritizes_higher_effort_when_due_date_and_priority_match
+- Priority-Based Scheduling → test_priority_ordering
+- Maximum Tasks Per Day → test_max_tasks_per_day
+- Overflow to Next Day → test_schedule_overflow_to_next_day
+- Earliest Start Constraint → test_earliest_start_constraint
+
+SCHEDULE ORGANIZATION
+- Category-Based Distribution → test_category_distribution
+- Effort-Level Balancing → test_effort_level_balancing
+- Time Assignment → test_time_assignment_sequence
+
+CONFLICT HANDLING
+- Capacity Conflicts → test_capacity_conflicts
+- Schedule Conflict Detection → test_detect_schedule_conflicts
+
+UI-RELATED (BACKEND VALIDATION)
+- Overdue Task Highlighting → test_overdue_task_highlighting
+- Schedule Auto Refresh (API behavior) → test_schedule_auto_refresh
+"""
+
 import os
 import tempfile
 import unittest
