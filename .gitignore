@@ -1,11 +1,19 @@
 # Python cache
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
 
-# Virtual environments
+# Virtual env
 venv/
 .env/
 
-# Database (your case)
+# Database
 *.db
 backend/tasks.db
+
+# OS files
+.DS_Store
+
+# Logs
+*.log
