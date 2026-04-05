@@ -206,36 +206,103 @@ class ApiTests(unittest.TestCase):
     def test_schedule_overflow_to_next_day(self):
         self.login()
 
-        now = datetime.now()
+        tomorrow = datetime.now().date() + timedelta(days=1)
+        due_date = datetime.combine(
+            tomorrow,
+            datetime.strptime("5:00 PM", "%I:%M %p").time()
+        ).strftime("%Y-%m-%d %H:%M")
 
         for i in range(3):
-            due_date = (now + timedelta(days=1)).strftime("%Y-%m-%d %H:%M")
-
-            self.client.post("/api/tasks", json={
-                "title": f"Overflow Task {i}",
-                "due_date": due_date,
-                "priority": "High",
-                "duration_minutes": 60,
-                "effort_level": "Medium",
-                "start_after": "",
-                "category": "General",
-                "description": "",
-                "notes": ""
+            res = self.client.post("/api/tasks", json={
+            "title": f"Task {i+1}",
+            "due_date": due_date,
+            "priority": "Medium",
+            "duration_minutes": 60,
+            "effort_level": "Medium",
+            "start_after": "",
+            "category": "General",
+            "description": "",
+            "notes": ""
             })
+            self.assertEqual(res.status_code, 201)
 
         res = self.client.post("/api/schedule", json={
-            "days": 3,
-            "max_tasks_per_day": 1
+        "days": 2,
+        "max_tasks_per_day": 2
         })
-
         self.assertEqual(res.status_code, 200)
 
         schedule = res.get_json()["schedule"]
-        days = list(schedule.keys())
+        days = sorted(schedule.keys())
 
-        self.assertEqual(len(schedule[days[0]]), 1)
+        self.assertEqual(len(schedule[days[0]]), 2)
         self.assertEqual(len(schedule[days[1]]), 1)
 
+    def test_schedule_auto_refresh_after_task_completion(self):
+        """
+        USER STORY: Schedule Auto Refresh after task completion
+        """
+
+        self.login()
+
+        future_date = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d %H:%M")
+
+        create_res = self.client.post("/api/tasks", json={
+        "title": "Refresh Test Task",
+        "due_date": future_date,
+        "priority": "High",
+        "duration_minutes": 60,
+        "effort_level": "Medium",
+        "start_after": "",
+        "category": "General",
+        "description": "",
+        "notes": ""
+        })
+        self.assertEqual(create_res.status_code, 201)
+
+        task_id = create_res.get_json()["id"]
+
+        schedule_res_1 = self.client.post("/api/schedule", json={
+        "days": 7,
+        "max_tasks_per_day": 4
+        })
+        self.assertEqual(schedule_res_1.status_code, 200)
+
+        schedule_1 = schedule_res_1.get_json()["schedule"]
+
+        all_titles_before = []
+        for day_tasks in schedule_1.values():
+            all_titles_before.extend([task["title"] for task in day_tasks])
+
+        self.assertIn("Refresh Test Task", all_titles_before)
+
+        update_res = self.client.put(f"/api/tasks/{task_id}", json={
+        "title": "Refresh Test Task",
+        "due_date": future_date,
+        "priority": "High",
+        "status": "Completed",
+        "duration_minutes": 60,
+        "effort_level": "Medium",
+        "start_after": "",
+        "category": "General",
+        "description": "",
+        "notes": ""
+        })
+        self.assertEqual(update_res.status_code, 200)
+
+        schedule_res_2 = self.client.post("/api/schedule", json={
+        "days": 7,
+        "max_tasks_per_day": 4
+        })
+        self.assertEqual(schedule_res_2.status_code, 200)
+
+        schedule_2 = schedule_res_2.get_json()["schedule"]
+
+        all_titles_after = []
+        for day_tasks in schedule_2.values():
+            all_titles_after.extend([task["title"] for task in day_tasks])
+
+        self.assertNotIn("Refresh Test Task", all_titles_after)
 
     
     # Tests that tasks are not scheduled before their start_after time
@@ -324,6 +391,84 @@ class ApiTests(unittest.TestCase):
             hours = 0
 
         return hours * 60 + minutes
+
+    def test_category_based_task_distribution_story(self):
+        """
+        USER STORY: Category-Based Task Distribution
+        """
+
+        self.login()
+
+        future_date = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d %H:%M")
+
+        tasks_to_create = [
+            {
+            "title": "Math Homework",
+            "category": "School",
+            "priority": "High"
+            },
+            {
+            "title": "Science Reading",
+            "category": "School",
+            "priority": "Medium"
+            },
+            {
+            "title": "Gym Workout",
+            "category": "Health",
+            "priority": "Medium"
+            },
+            {
+            "title": "Project Report",
+            "category": "Work",
+            "priority": "Low"
+            }
+        ]
+
+        for task in tasks_to_create:
+            res = self.client.post("/api/tasks", json={
+            "title": task["title"],
+            "due_date": future_date,
+            "priority": task["priority"],
+            "duration_minutes": 60,
+            "effort_level": "Medium",
+            "start_after": "",
+            "category": task["category"],
+            "description": "",
+            "notes": ""
+            })
+            self.assertEqual(res.status_code, 201)
+
+        schedule_res = self.client.post("/api/schedule", json={
+            "days": 7,
+            "max_tasks_per_day": 5
+        })
+        self.assertEqual(schedule_res.status_code, 200)
+
+        schedule = schedule_res.get_json()["schedule"]
+        self.assertTrue(len(schedule) > 0)
+
+        all_scheduled = []
+        for day_tasks in schedule.values():
+            all_scheduled.extend(day_tasks)
+
+            self.assertEqual(len(all_scheduled), 4)
+
+            categories = [task["category"] for task in all_scheduled]
+
+        # AC 1 / 2 / 3 / 4:
+        # When multiple categories exist, same-category tasks should not be grouped
+        # together consecutively if other categories are available.
+        for i in range(len(categories) - 1):
+            current_category = categories[i]
+            next_category = categories[i + 1]
+
+            if current_category == "School" and next_category == "School":
+                self.fail("School tasks were placed consecutively even though other categories were available.")
+
+        # Confirm multiple categories are present in the final schedule
+        self.assertIn("School", categories)
+        self.assertIn("Health", categories)
+        self.assertIn("Work", categories)
 
     # User Story #5: Conflict Detection
     def find_conflicts_in_schedule(self, schedule):
