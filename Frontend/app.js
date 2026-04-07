@@ -168,7 +168,6 @@ const form = document.getElementById("taskForm");
 const msg = document.getElementById("message");
 const tbody = document.getElementById("taskTableBody");
 const sortSelect = document.getElementById("sortSelect");
-const taskSearchInput = document.getElementById("taskSearchInput");
 
 // --- Task Editing Elements ---
 const editSection = document.getElementById("editTaskSection");
@@ -408,6 +407,16 @@ async function fetchTasks(sort = "") {
   }
 }
 
+// Unit testable function for filtering tasks by title
+function filterTasksByTitle(tasks, searchTerm) {
+  if (!searchTerm || !searchTerm.trim()) {
+    return tasks;
+  }
+
+  const term = searchTerm.toLowerCase().trim();
+  return tasks.filter(task => task.title.toLowerCase().includes(term));
+}
+
 async function loadTaskTable() {
   if (!tbody) return;
 
@@ -419,15 +428,14 @@ async function loadTaskTable() {
   if (searchTerm) {
     tasks = tasks.filter(task => {
       return (
-        (task.title && task.title.toLowerCase().includes(searchTerm)) ||
+        task.title.toLowerCase().includes(searchTerm) ||
         (task.category && task.category.toLowerCase().includes(searchTerm)) ||
         (task.notes && task.notes.toLowerCase().includes(searchTerm)) ||
-        (task.description && task.description.toLowerCase().includes(searchTerm)) ||
-        (task.status && task.status.toLowerCase().includes(searchTerm)) ||
-        (task.priority && task.priority.toLowerCase().includes(searchTerm))
+        (task.description && task.description.toLowerCase().includes(searchTerm))
       );
     });
   }
+  // --- END OF SEARCH LOGIC ---
 
   if (!tasks.length) {
     tbody.innerHTML = `
@@ -1375,17 +1383,6 @@ if (cancelEditBtn) {
 // ---------- Sorting ----------
 if (sortSelect) {
   sortSelect.addEventListener("change", loadTaskTable);
-}
-
-if (taskSearchInput) {
-  taskSearchInput.addEventListener("input", loadTaskTable);
-
-  taskSearchInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      loadTaskTable();
-    }
-  });
 }
 
 /*

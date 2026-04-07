@@ -55,7 +55,7 @@ import tempfile
 import unittest
 from datetime import datetime, timedelta
 
-from backend.app import create_app
+from app import create_app
 
 
 '''
@@ -77,7 +77,7 @@ class ApiTests(unittest.TestCase):
         self.app.config["SESSION_COOKIE_HTTPONLY"] = False
 
         with self.app.app_context():
-            from backend.app.database import init_db
+            from app.database import init_db
             init_db()
 
         self.client = self.app.test_client()
@@ -169,6 +169,55 @@ class ApiTests(unittest.TestCase):
         data = res.get_json()
 
         self.assertEqual(len(data), 0)
+
+    def test_delete_nonexistent_task(self):
+        self.login()
+
+        res = self.client.delete("/api/tasks/99999")
+        self.assertEqual(res.status_code, 404)
+
+        data = res.get_json()
+        self.assertIn("error", data)
+
+    def test_delete_task_without_login(self):
+        # Don't login
+        res = self.client.delete("/api/tasks/1")
+        self.assertEqual(res.status_code, 401)
+
+    def test_delete_task_with_invalid_id(self):
+        self.login()
+
+        res = self.client.delete("/api/tasks/invalid")
+        self.assertEqual(res.status_code, 405)  # Method not allowed for non-int route
+
+    def test_delete_task_and_verify_schedule_updated(self):
+        self.login()
+
+        # Create task
+        res = self.client.post("/api/tasks", json={
+            "title": "Task to Schedule and Delete",
+            "due_date": "2026-04-01 12:00",
+            "priority": "High",
+            "duration_minutes": 60
+        })
+        task = res.get_json()
+        task_id = task["id"]
+
+        # Generate schedule
+        res = self.client.post("/api/schedule", json={
+            "days": 7,
+            "max_tasks_per_day": 4
+        })
+        self.assertEqual(res.status_code, 200)
+
+        # Delete task
+        res = self.client.delete(f"/api/tasks/{task_id}")
+        self.assertEqual(res.status_code, 200)
+
+        # Verify task is gone from tasks list
+        res = self.client.get("/api/tasks")
+        tasks = res.get_json()
+        self.assertEqual(len(tasks), 0)
 
     # User Story #4: Generate Schedule From Task Log
     def test_generate_schedule_with_no_tasks(self):
