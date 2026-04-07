@@ -746,4 +746,4 @@ def generate_schedule(days=7, max_tasks_per_day=4):
     "schedule": grouped_schedule,
     "capacity_conflicts": capacity_conflicts,
     "unscheduled_tasks": unscheduled_tasks
-    }
+    } 
