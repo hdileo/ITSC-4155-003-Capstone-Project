@@ -168,6 +168,7 @@ const form = document.getElementById("taskForm");
 const msg = document.getElementById("message");
 const tbody = document.getElementById("taskTableBody");
 const sortSelect = document.getElementById("sortSelect");
+const taskSearchInput = document.getElementById("taskSearch");
 
 // --- Task Editing Elements ---
 const editSection = document.getElementById("editTaskSection");
@@ -2771,15 +2772,14 @@ if (introOverlay) {
 
 // ---------- Initial load ----------
 // THE TRIGGER:
-const taskSearchField = document.querySelector('input[placeholder*="3190"]');
-if (taskSearchField) {
-  taskSearchField.addEventListener("input", () => {
+if (taskSearchInput) {
+  taskSearchInput.addEventListener("input", () => {
     loadTaskTable(); 
   });
 }
 
 if (tbody && sortSelect) {
-  fetchTasks();
+  loadTaskTable();
 }
 
 loadDashboard();
