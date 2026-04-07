@@ -494,11 +494,22 @@ Purpose: Display Our Start and End Time in an Organized Format
 '''
 
 #This is a Helper Method for Formatting our Dates 
+def format_clock_time(dt):
+    hour = dt.hour % 12
+    if hour == 0:
+        hour = 12
+
+    minute = dt.minute
+    meridiem = "AM" if dt.hour < 12 else "PM"
+
+    return f"{hour}:{minute:02d} {meridiem}"
+
+
 def format_time_range(start_dt, duration_minutes):
     end_dt = start_dt + timedelta(minutes=duration_minutes)
     return (
-        start_dt.strftime("%-I:%M %p"),
-        end_dt.strftime("%-I:%M %p")
+        format_clock_time(start_dt),
+        format_clock_time(end_dt)
     )
 
 '''
