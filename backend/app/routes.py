@@ -160,10 +160,14 @@ from functools import wraps
 from flask import Blueprint, jsonify, request, send_from_directory, session
 from .storage import create_task, get_all_tasks, update_task, delete_task, generate_schedule
 from datetime import datetime
+import os
 
 # Main blueprints
 api = Blueprint("api", __name__)
 auth = Blueprint("auth", __name__)
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+FRONTEND_DIR = os.path.abspath(os.path.join(BASE_DIR, "../../Frontend"))
 
 TEST_USERNAME = "admin"
 TEST_PASSWORD = "momentum123"
@@ -263,9 +267,10 @@ def is_valid_datetime_string(value):
 # When a user visits the root URL ("/"), this route loads
 # the frontend landing page.
 
-@api.route("/", methods=["GET"])
+@api.route("/")
 def index():
-    return send_from_directory("../../Frontend", "index.html")
+    return send_from_directory(FRONTEND_DIR, "index.html")
+
 
 
 # -----------------------------------------------
@@ -278,9 +283,9 @@ def index():
 # Behavior:
 # Loads dashboard.html from the frontend directory.
 
-@api.route("/dashboard.html", methods=["GET"])
+@api.route("/dashboard")
 def dashboard_page():
-    return send_from_directory("../../Frontend", "dashboard.html")
+    return send_from_directory(FRONTEND_DIR, "dashboard.html")
 
 # -----------------------------------------------
 # Route: Tasks Page
@@ -292,10 +297,9 @@ def dashboard_page():
 # Behavior:
 # Loads tasks.html from the frontend directory.
 
-
-@api.route("/tasks.html", methods=["GET"])
+@api.route("/tasks")
 def tasks_page():
-    return send_from_directory("../../Frontend", "tasks.html")
+    return send_from_directory(FRONTEND_DIR, "tasks.html")
 
 # -----------------------------------------------
 # Route: Schedule Page
@@ -307,9 +311,10 @@ def tasks_page():
 # Behavior:
 # Loads schedule.html from the frontend directory.
 
-@api.route("/schedule.html", methods=["GET"])
+@api.route("/schedule")
 def schedule_page():
-    return send_from_directory("../../Frontend", "schedule.html")
+    return send_from_directory(FRONTEND_DIR, "schedule.html")
+
 
 # -----------------------------------------------
 # Route: Login Page
@@ -321,9 +326,9 @@ def schedule_page():
 # Behavior:
 # Loads login.html from the frontend directory.
 
-@api.route("/login.html", methods=["GET"])
+@api.route("/login")
 def login_page():
-    return send_from_directory("../../Frontend", "login.html")
+    return send_from_directory(FRONTEND_DIR, "login.html")
 
 
 # =========================
@@ -339,7 +344,13 @@ def health():
 # TASK ROUTES(Ex: LIST, ADD, EDIT, DELETE)
 # =========================
 
+@api.route("/styles.css")
+def styles():
+    return send_from_directory(FRONTEND_DIR, "styles.css")
 
+@api.route("/app.js")
+def app_js():
+    return send_from_directory(FRONTEND_DIR, "app.js")
 
 
 
