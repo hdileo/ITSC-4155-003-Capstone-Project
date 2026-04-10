@@ -13,7 +13,7 @@ def create_app(test_config=None):
     # -----------------------------
     app = Flask(
         __name__,
-        static_folder="../../frontend",
+        static_folder="../../Frontend",
         static_url_path=""
     )
 

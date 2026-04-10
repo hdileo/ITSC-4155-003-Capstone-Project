@@ -185,7 +185,7 @@ TEST_PASSWORD = "momentum123"
 def login():
     data = request.get_json(silent=True) or {}
 
-    username = (data.get("username") or "").strip()
+    username = (data.get("username") or data.get("email") or "").strip()
     password = (data.get("password") or "").strip()
 
     if username != TEST_USERNAME or password != TEST_PASSWORD:
