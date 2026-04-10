@@ -265,7 +265,7 @@ def is_valid_datetime_string(value):
 
 @api.route("/", methods=["GET"])
 def index():
-    return send_from_directory("../../frontend", "index.html")
+    return send_from_directory("../../Frontend", "index.html")
 
 
 # -----------------------------------------------
@@ -280,7 +280,7 @@ def index():
 
 @api.route("/dashboard.html", methods=["GET"])
 def dashboard_page():
-    return send_from_directory("../../frontend", "dashboard.html")
+    return send_from_directory("../../Frontend", "dashboard.html")
 
 # -----------------------------------------------
 # Route: Tasks Page
@@ -295,7 +295,7 @@ def dashboard_page():
 
 @api.route("/tasks.html", methods=["GET"])
 def tasks_page():
-    return send_from_directory("../../frontend", "tasks.html")
+    return send_from_directory("../../Frontend", "tasks.html")
 
 # -----------------------------------------------
 # Route: Schedule Page
@@ -309,7 +309,7 @@ def tasks_page():
 
 @api.route("/schedule.html", methods=["GET"])
 def schedule_page():
-    return send_from_directory("../../frontend", "schedule.html")
+    return send_from_directory("../../Frontend", "schedule.html")
 
 # -----------------------------------------------
 # Route: Login Page
@@ -323,7 +323,7 @@ def schedule_page():
 
 @api.route("/login.html", methods=["GET"])
 def login_page():
-    return send_from_directory("../../frontend", "login.html")
+    return send_from_directory("../../Frontend", "login.html")
 
 
 # =========================
