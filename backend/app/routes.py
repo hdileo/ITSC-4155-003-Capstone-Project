@@ -352,6 +352,14 @@ def styles():
 def app_js():
     return send_from_directory(FRONTEND_DIR, "app.js")
 
+@api.route("/learn-more")
+def learn_more_page():
+    return send_from_directory(FRONTEND_DIR, "learn-more.html")
+
+@api.route("/about")
+def about_page():
+    return send_from_directory(FRONTEND_DIR, "about.html")
+
 
 
 
@@ -411,6 +419,7 @@ def list_tasks():
             "effort_level": t["effort_level"],
             "start_after": t["start_after"],
             "category": t["category"],
+            "group_name": t["group_name"],
             "description": t["description"],
             "notes": t["notes"],
             "is_overdue": check_overdue(t["due_date"], t["status"])
@@ -437,6 +446,7 @@ def add_task():
     effort_level = (data.get("effort_level") or "Medium").strip()
     start_after = (data.get("start_after") or "").strip() or None
     category = (data.get("category") or "General").strip()
+    group_name = (data.get("group_name") or "").strip() or None
     description = (data.get("description") or "").strip()
     notes = (data.get("notes") or "").strip()
 
@@ -469,6 +479,7 @@ def add_task():
         effort_level=effort_level,
         start_after=start_after,
         category=category,
+        group_name=group_name,
         description=description,
         notes=notes
     )
@@ -483,6 +494,7 @@ def add_task():
         "effort_level": task["effort_level"],
         "start_after": task["start_after"],
         "category": task["category"],
+        "group_name": task["group_name"],
         "description": task["description"],
         "notes": task["notes"]
     }), 201
@@ -524,6 +536,7 @@ def edit_task(task_id):
     effort_level = (data.get("effort_level") or "Medium").strip()
     start_after = (data.get("start_after") or "").strip() or None
     category = (data.get("category") or "General").strip()
+    group_name = (data.get("group_name") or "").strip() or None
     description = (data.get("description") or "").strip()
     notes = (data.get("notes") or "").strip()
 
@@ -561,6 +574,7 @@ def edit_task(task_id):
         effort_level=effort_level,
         start_after=start_after,
         category=category,
+        group_name=group_name,
         description=description,
         notes=notes
     )
@@ -580,6 +594,7 @@ def edit_task(task_id):
             "effort_level": updated["effort_level"],
             "start_after": updated["start_after"],
             "category": updated["category"],
+            "group_name": updated["group_name"],
             "description": updated["description"],
             "notes": updated["notes"]
         }
@@ -640,11 +655,19 @@ def remove_task(task_id):
 # Returns:
 # 200 OK → Schedule generated (or no tasks available)
 # 400 Bad Request → Invalid input values
-
 @api.route("/api/schedule", methods=["POST"])
 @login_required
 def build_schedule():
     data = request.get_json(silent=True) or {}
+    selected_groups = data.get("selected_groups", "all")
+
+    if selected_groups == []:
+        return jsonify({
+            "message": "No groups selected.",
+            "schedule": {},
+            "capacity_conflicts": [],
+            "unscheduled_tasks": []
+        }), 200
 
     try:
         days = int(data.get("days", 7))
@@ -658,8 +681,11 @@ def build_schedule():
     except (TypeError, ValueError):
         return jsonify({"error": "Max tasks per day must be a valid number."}), 400
 
-    #  IMPORTANT CHANGE: expect FULL result object
-    result = generate_schedule(days=days, max_tasks_per_day=max_tasks_per_day)
+    result = generate_schedule(
+        days=days,
+        max_tasks_per_day=max_tasks_per_day,
+        selected_groups=selected_groups
+    )
 
     schedule = result.get("schedule", {})
     capacity_conflicts = result.get("capacity_conflicts", [])
@@ -679,4 +705,3 @@ def build_schedule():
         "capacity_conflicts": capacity_conflicts,
         "unscheduled_tasks": unscheduled_tasks
     }), 200
-

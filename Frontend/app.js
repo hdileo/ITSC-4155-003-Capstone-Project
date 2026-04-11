@@ -185,6 +185,7 @@ const editDurationMinutes = document.getElementById("editDurationMinutes");
 const editEffortLevel = document.getElementById("editEffortLevel");
 const editStartAfter = document.getElementById("editStartAfter");
 const editCategory = document.getElementById("editCategory");
+const editGroupName = document.getElementById("editGroupName");
 const editDescription = document.getElementById("editDescription");
 const editNotes = document.getElementById("editNotes");
 
@@ -653,6 +654,7 @@ function renderTasks(tasks) {
             <span class="task-meta-pill">${task.effort_level} Effort</span>
             <span class="task-meta-pill">Start: ${formattedStartAfter}</span>
             ${task.notes ? `<span class="task-meta-pill">Notes</span>` : ""}
+            ${task.group_name ? `<span class="task-meta-pill group-pill">${task.group_name}</span>` : ""}
           </div>
         </div>
       </td>
@@ -1010,6 +1012,7 @@ if (form) {
     const durationMinutes = document.getElementById("durationMinutes")?.value || 60;
     const effortLevel = document.getElementById("effortLevel")?.value || "Medium";
     const startAfterInput = document.getElementById("startAfter")?.value.trim() || "";
+    const groupName = document.getElementById("groupName").value.trim();
     const category = document.getElementById("category")?.value || "General";
     const description = document.getElementById("description")?.value.trim() || "";
     const notes = document.getElementById("notes")?.value.trim() || "";
@@ -1046,6 +1049,7 @@ if (form) {
           effort_level: effortLevel,
           start_after,
           category,
+          group_name: groupName,
           description,
           notes
         })
@@ -1075,6 +1079,7 @@ if (form) {
       await loadTaskTable();
       await refreshScheduleView();
       clearCreateMessageAfterDelay();
+      await loadGroupFilters();
     } catch (err) {
       console.error(err);
       if (msg) {
@@ -1150,6 +1155,12 @@ function openEditForm(task) {
   editDurationMinutes.value = task.duration_minutes ?? 60;
   editEffortLevel.value = task.effort_level ?? "Medium";
   editCategory.value = task.category ?? "General";
+  if (editGroupName) {
+  editGroupName.value = task.group_name ?? "";
+}
+  if (editGroupName) {
+    editGroupName.value = task.group_name ?? "";
+  }
 
   if (editDescription) {
     editDescription.value = task.description ?? "";
@@ -1348,14 +1359,15 @@ if (editForm) {
         effort_level: effortLevel,
         start_after,
         category,
+        group_name: editGroupName ? editGroupName.value.trim() : "",
         description,
         notes
       };
-
       await loadTaskTable();
       await refreshScheduleView();
       highlightUpdatedFields(id, updatedTask);
       clearEditMessageAfterDelay();
+      await loadGroupFilters();
 
       setTimeout(() => {
         closeEditForm();
@@ -1846,7 +1858,7 @@ async function refreshScheduleView() {
     const res = await fetch("/api/schedule", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ days, max_tasks_per_day })
+      body: JSON.stringify({ days, max_tasks_per_day,selected_groups: getSelectedGroupsForSchedule() })
     });
 
     const data = await res.json();
@@ -1951,7 +1963,7 @@ async function handleGenerateSchedule() {
     const res = await fetch("/api/schedule", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ days, max_tasks_per_day })
+      body: JSON.stringify({ days, max_tasks_per_day,selected_groups: getSelectedGroupsForSchedule() })
     });
 
     const data = await res.json();
@@ -2454,6 +2466,80 @@ function initMomentumOrb() {
 
 }
 
+async function loadGroupFilters() {
+  try {
+    const res = await fetch("/api/tasks", {
+      credentials: "include"
+    });
+
+    const tasks = await res.json();
+
+    const container = document.getElementById("groupCheckboxContainer");
+    const allGroupsCheckbox = document.getElementById("allGroupsCheckbox");
+
+    if (!container) return;
+
+    container.innerHTML = "";
+
+    const uniqueGroups = [...new Set(
+      tasks
+        .map(task => (task.group_name || "").trim())
+        .filter(group => group !== "")
+    )];
+
+    uniqueGroups.forEach(group => {
+      const label = document.createElement("label");
+      label.innerHTML = `
+        <input type="checkbox" class="group-checkbox" value="${group}">
+        ${group}
+      `;
+      container.appendChild(label);
+    });
+
+    if (allGroupsCheckbox) {
+      allGroupsCheckbox.addEventListener("change", () => {
+        const groupCheckboxes = document.querySelectorAll(".group-checkbox");
+        if (allGroupsCheckbox.checked) {
+          groupCheckboxes.forEach(cb => {
+            cb.checked = false;
+          });
+        }
+        updateSelectedGroupsLabel();
+      });
+    }
+
+    document.querySelectorAll(".group-checkbox").forEach(cb => {
+      cb.addEventListener("change", () => {
+        if (cb.checked && allGroupsCheckbox) {
+          allGroupsCheckbox.checked = false;
+        }
+        updateSelectedGroupsLabel();
+      });
+    });
+
+    updateSelectedGroupsLabel();
+  } catch (err) {
+    console.error("Failed to load group filters:", err);
+  }
+}
+
+function updateSelectedGroupsLabel() {
+  const label = document.getElementById("selectedGroupsLabel");
+  const allGroupsCheckbox = document.getElementById("allGroupsCheckbox");
+  const checkedGroups = [...document.querySelectorAll(".group-checkbox:checked")]
+    .map(cb => cb.value);
+
+  if (!label) return;
+
+  if (allGroupsCheckbox && allGroupsCheckbox.checked) {
+    label.textContent = "Showing: All Groups";
+  } else if (checkedGroups.length > 0) {
+    label.textContent = `Showing: ${checkedGroups.join(", ")}`;
+  } else {
+    label.textContent = "Showing: None";
+  }
+}
+
 function detectAllScheduleConflicts(schedule) {
   const allConflicts = [];
 
@@ -2467,6 +2553,31 @@ function detectAllScheduleConflicts(schedule) {
   });
 
   return allConflicts;
+}
+
+function handleSubscribe() {
+  const input = document.getElementById("emailInput");
+  const msg = document.getElementById("subscribeMsg");
+
+  if (!input.value.includes("@")) {
+    msg.innerText = "Please enter a valid email";
+    return;
+  }
+
+  msg.innerText = "You're in! 🚀";
+  input.value = "";
+}
+
+function getSelectedGroupsForSchedule() {
+  const allGroupsCheckbox = document.getElementById("allGroupsCheckbox");
+  const checkedGroups = [...document.querySelectorAll(".group-checkbox:checked")]
+    .map(cb => cb.value);
+
+  if (allGroupsCheckbox && allGroupsCheckbox.checked) {
+    return "all";
+  }
+
+  return checkedGroups;
 }
 
 
@@ -2772,6 +2883,8 @@ if (introOverlay) {
 
 
 
+
+
 // ---------- Initial load ----------
 // THE TRIGGER:
 const taskSearchField = document.querySelector('input[placeholder*="3190"]');
@@ -2787,6 +2900,7 @@ if (tbody && sortSelect) {
 
 loadDashboard();
 initDatePickers();
+loadGroupFilters();
 
 const orbCanvas = document.getElementById("momentumOrbCanvas");
 if (orbCanvas) {

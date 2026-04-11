@@ -192,9 +192,9 @@ modern, full-stack productivity system.
           intelligent planner built for steady progress.
         </p>
 
-        <div class="hero-actions">
-          <a href="dashboard.html" class="btn-primary">Get Started</a>
-          <a href="tasks.html" class="btn-secondary">View Tasks</a>
+        <div class="hero-buttons">
+          <button class="btn-primary" onclick="window.location.href='learn-more.html'">Learn More</button>
+          <button class="btn-secondary" onclick="window.location.href='about.html'">About Us</button>
         </div>
       </section>
 
@@ -374,6 +374,32 @@ modern, full-stack productivity system.
         </article>
       </div>
     </section>
+
+    <section class="momentum-stats-strip">
+      <p class="stats-strip-label">
+        Helping users stay organized, focused, and in control every week
+      </p>
+    
+      <div class="stats-marquee">
+        <div class="stats-track">
+          <div class="stat-pill"><span>6+</span> hours saved weekly</div>
+          <div class="stat-pill"><span>92%</span> schedule completion</div>
+          <div class="stat-pill"><span>40+</span> tasks organized</div>
+          <div class="stat-pill"><span>0</span> missed priorities</div>
+          <div class="stat-pill"><span>3x</span> clearer weekly planning</div>
+          <div class="stat-pill"><span>24/7</span> task visibility</div>
+    
+          <div class="stat-pill"><span>6+</span> hours saved weekly</div>
+          <div class="stat-pill"><span>92%</span> schedule completion</div>
+          <div class="stat-pill"><span>40+</span> tasks organized</div>
+          <div class="stat-pill"><span>0</span> missed priorities</div>
+          <div class="stat-pill"><span>3x</span> clearer weekly planning</div>
+          <div class="stat-pill"><span>24/7</span> task visibility</div>
+        </div>
+      </div>
+    </section>
+
+
     <section class="social-proof-section">
       <div class="social-proof-header">
         <h2>See Momentum in Action</h2>
@@ -448,6 +474,35 @@ modern, full-stack productivity system.
         </div>
       </div>
     </section>
+    <footer class="momentum-footer">
+      <div class="footer-container">
+    
+        <!-- Left: Branding -->
+        <div class="footer-brand">
+          <h2>Momentum</h2>
+          <p>Build consistency. Stay focused. Move forward.</p>
+        </div>
+    
+        <!-- Center: Links -->
+        <div class="footer-links">
+          <a href="dashboard.html">Dashboard</a>
+          <a href="tasks.html">Tasks</a>
+          <a href="schedule.html">Schedule</a>
+          <a href="login.html">Login</a>
+        </div>
+    
+        <!-- Right: Cool Feature (Email Capture Mock) -->
+        <div class="footer-newsletter">
+          <p>Get productivity tips</p>
+          <div class="newsletter-box">
+            <input type="email" id="emailInput" placeholder="Enter your email" />
+            <button onclick="handleSubscribe()">Join</button>
+          </div>
+          <span id="subscribeMsg"></span>
+        </div>
+    
+      </div>
+    </footer>
   </div>
   <script src="/app.js"></script>
 </body>

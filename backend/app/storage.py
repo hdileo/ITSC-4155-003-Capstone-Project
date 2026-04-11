@@ -345,6 +345,7 @@ def create_task(
     effort_level="Medium",
     start_after=None,
     category="General",
+    group_name=None,
     description="",
     notes=""
 ):
@@ -361,10 +362,11 @@ def create_task(
             effort_level,
             start_after,
             category,
+            group_name,
             description,
             notes
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         title,
         due_date,
@@ -374,6 +376,7 @@ def create_task(
         effort_level,
         start_after,
         category,
+        group_name,
         description,
         notes
     ))
@@ -424,6 +427,7 @@ def update_task(
     effort_level,
     start_after,
     category,
+    group_name=None,
     description="",
     notes=""
 ):
@@ -441,6 +445,7 @@ def update_task(
             effort_level = ?,
             start_after = ?,
             category = ?,
+            group_name = ?,
             description = ?,
             notes = ?
         WHERE task_id = ?
@@ -452,10 +457,11 @@ def update_task(
         duration_minutes,
         effort_level,
         start_after,
-        category,
-        description,
-        notes,
-        task_id
+       category,
+       group_name,
+       description,
+       notes,
+       task_id
     ))
 
     conn.commit()
@@ -630,11 +636,18 @@ User Story #6: Generate Schedule
 
 '''
 
-def generate_schedule(days=7, max_tasks_per_day=4):
+def generate_schedule(days=7, max_tasks_per_day=4, selected_groups="all"):
     tasks = get_all_tasks(sort_by="date")
 
     # Ignore completed tasks
     tasks = [t for t in tasks if t["status"] != "Completed"]
+
+    # Filter by selected groups
+    if selected_groups != "all":
+        tasks = [
+            t for t in tasks
+            if (t.get("group_name") or "") in selected_groups
+    ]
 
     priority_order = {"High": 0, "Medium": 1, "Low": 2}
     effort_order = {"High": 0, "Medium": 1, "Low": 2}
@@ -704,6 +717,7 @@ def generate_schedule(days=7, max_tasks_per_day=4):
                 "effort_level": task["effort_level"],
                 "start_after": task["start_after"],
                 "category": task["category"],
+                "group_name": task.get("group_name"),
                 "description": task.get("description", ""),
                 "notes": task.get("notes", ""),
                 "reason": "No available slot within the selected schedule range and max tasks per day limit."
@@ -727,6 +741,7 @@ def generate_schedule(days=7, max_tasks_per_day=4):
             "effort_level": task["effort_level"],
             "start_after": task["start_after"],
             "category": task["category"],
+            "group_name": task.get("group_name"),
             "description": task.get("description", ""),
             "notes": task.get("notes", "")
         })

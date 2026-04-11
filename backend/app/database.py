@@ -32,6 +32,7 @@ def init_db():
         effort_level TEXT NOT NULL DEFAULT 'Medium',
         start_after TEXT,
         category TEXT NOT NULL DEFAULT 'General',
+        group_name TEXT,
         description TEXT,
         notes TEXT
     )
@@ -51,6 +52,9 @@ def init_db():
 
     if "notes" not in columns:
         cursor.execute("ALTER TABLE tasks ADD COLUMN notes TEXT")
+
+    if "group_name" not in columns:
+        cursor.execute("ALTER TABLE tasks ADD COLUMN group_name TEXT")
 
     conn.commit()
     conn.close()
