@@ -1306,6 +1306,7 @@ if (editForm) {
     const effortLevel = editEffortLevel.value;
     const startAfterInput = editStartAfter.value.trim();
     const category = editCategory.value;
+    const group_name = editGroupName ? editGroupName.value.trim() : "";
     const description = editDescription ? editDescription.value.trim() : "";
     const notes = editNotes ? editNotes.value.trim() : "";
 
@@ -1335,6 +1336,7 @@ if (editForm) {
           effort_level: effortLevel,
           start_after,
           category,
+          group_name,
           description,
           notes
         })
@@ -1361,10 +1363,11 @@ if (editForm) {
         effort_level: effortLevel,
         start_after,
         category,
-        group_name: editGroupName ? editGroupName.value.trim() : "",
+        group_name,
         description,
         notes
       };
+
       await loadTaskTable();
       await refreshScheduleView();
       highlightUpdatedFields(id, updatedTask);
@@ -1381,7 +1384,6 @@ if (editForm) {
     }
   });
 }
-
 if (cancelEditBtn) {
   cancelEditBtn.addEventListener("click", closeEditForm);
 }

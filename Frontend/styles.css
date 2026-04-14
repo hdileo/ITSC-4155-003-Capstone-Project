@@ -3693,18 +3693,24 @@ button {
 
 .calendar-shell {
 	display: grid;
-	grid-template-columns: 90px 1fr;
+	grid-template-columns: 90px minmax(0, 1fr);
 	gap: 0;
 	border-radius: 24px;
-	overflow: hidden;
+	overflow-x: auto;
+	overflow-y: hidden;
 	border: 1px solid rgba(255,255,255,0.08);
 	background: rgba(15, 23, 42, 0.28);
   }
   
   .calendar-time-column {
+	min-width: 90px;
+	flex-shrink: 0;
 	background: rgba(255,255,255,0.03);
 	border-right: 1px solid rgba(255,255,255,0.08);
 	padding-top: 66px;
+	position: sticky;
+	left: 0;
+	z-index: 3;
   }
   
   .calendar-time-label {
@@ -3718,6 +3724,12 @@ button {
 	font-weight: 700;
   }
   
+  .calendar-days-grid {
+	display: grid;
+	grid-auto-flow: column;
+	grid-auto-columns: minmax(180px, 1fr);
+	min-width: max-content;
+  }
   .calendar-days-grid {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
