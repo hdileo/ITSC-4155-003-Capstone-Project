@@ -596,8 +596,10 @@ def parse_task_datetime(value):
         return None
 
 
-def assign_times_for_day(tasks, day_date):
-    current_start = datetime.combine(day_date, time(9, 0))
+def assign_times_for_day(tasks, day_date, start_time_obj, end_time_obj):
+    current_start = datetime.combine(day_date, start_time_obj)
+    day_end = datetime.combine(day_date, end_time_obj)
+
     scheduled_tasks = []
     unscheduled_tasks = []
 
@@ -613,6 +615,15 @@ def assign_times_for_day(tasks, day_date):
 
         proposed_end = current_start + timedelta(minutes=duration_minutes)
 
+        # NEW: do not allow task to exceed the selected daily end time
+        if proposed_end > day_end:
+            unscheduled_tasks.append({
+                **task,
+                "reason": "Task could not fit within the selected daily time range."
+            })
+            continue
+
+        # Existing due-time check still applies
         if due_dt and due_dt.date() == day_date and proposed_end > due_dt:
             unscheduled_tasks.append({
                 **task,
@@ -636,7 +647,13 @@ User Story #6: Generate Schedule
 
 '''
 
-def generate_schedule(days=7, max_tasks_per_day=4, selected_groups="all"):
+def generate_schedule(
+    days=7,
+    max_tasks_per_day=4,
+    selected_groups="all",
+    daily_start_time="",
+    daily_end_time=""
+):
     tasks = get_all_tasks(sort_by="date")
 
     # Ignore completed tasks
@@ -647,7 +664,15 @@ def generate_schedule(days=7, max_tasks_per_day=4, selected_groups="all"):
         tasks = [
             t for t in tasks
             if (t.get("group_name") or "") in selected_groups
-    ]
+        ]
+
+    # Default time range (9 AM – 5 PM)
+    if not daily_start_time or not daily_end_time:
+        start_time_obj = time(9, 0)
+        end_time_obj = time(17, 0)
+    else:
+        start_time_obj = datetime.strptime(daily_start_time, "%H:%M").time()
+        end_time_obj = datetime.strptime(daily_end_time, "%H:%M").time()
 
     priority_order = {"High": 0, "Medium": 1, "Low": 2}
     effort_order = {"High": 0, "Medium": 1, "Low": 2}
@@ -705,7 +730,7 @@ def generate_schedule(days=7, max_tasks_per_day=4, selected_groups="all"):
 
             current_day += timedelta(days=1)
 
-        # NEW: track capacity conflict instead of silently skipping
+        # Track capacity conflict instead of silently skipping
         if not assigned_day:
             unscheduled_tasks.append({
                 "id": task["task_id"],
@@ -757,20 +782,24 @@ def generate_schedule(days=7, max_tasks_per_day=4, selected_groups="all"):
         balanced_tasks = balance_effort_levels(balanced_tasks)
         day_date = datetime.strptime(day_key, "%Y-%m-%d").date()
 
-        scheduled_tasks_for_day, day_unscheduled = assign_times_for_day(balanced_tasks, day_date)
+        scheduled_tasks_for_day, day_unscheduled = assign_times_for_day(
+            balanced_tasks,
+            day_date,
+            start_time_obj,
+            end_time_obj
+        )
         grouped_schedule[day_key] = scheduled_tasks_for_day
         unscheduled_tasks.extend(day_unscheduled)
-    # NEW: summarize capacity conflicts
-    # NEW: summarize conflicts
+
     if unscheduled_tasks:
         capacity_conflicts.append({
-        "type": "Scheduling Conflict",
-        "message": f"{len(unscheduled_tasks)} task(s) could not be scheduled due to time constraints, start_after limits, or daily capacity limits.",
-        "count": len(unscheduled_tasks)
-     })
+            "type": "Scheduling Conflict",
+            "message": f"{len(unscheduled_tasks)} task(s) could not be scheduled due to time constraints, start_after limits, or daily capacity limits.",
+            "count": len(unscheduled_tasks)
+        })
 
-    return {   
-    "schedule": grouped_schedule,
-    "capacity_conflicts": capacity_conflicts,
-    "unscheduled_tasks": unscheduled_tasks
+    return {
+        "schedule": grouped_schedule,
+        "capacity_conflicts": capacity_conflicts,
+        "unscheduled_tasks": unscheduled_tasks
     }

@@ -5759,3 +5759,81 @@ button {
   #groupName {
 	backdrop-filter: blur(10px);
   }
+
+  .schedule-time-range-card {
+	margin-top: 1.5rem;
+	padding: 1.5rem;
+	border-radius: 20px;
+	background: rgba(255, 255, 255, 0.03);
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	backdrop-filter: blur(12px);
+  }
+  
+  .schedule-time-range-header {
+	font-size: 1.1rem;
+	font-weight: 700;
+	color: #f3f0ff;
+	margin-bottom: 1rem;
+  }
+  
+  .time-range-row {
+	display: flex;
+	gap: 1rem;
+	flex-wrap: wrap;
+  }
+  
+  .time-range-field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	min-width: 180px;
+  }
+  
+  .time-range-field label {
+	color: rgba(255, 255, 255, 0.85);
+	font-weight: 600;
+  }
+  
+  .time-range-field input {
+	border-radius: 14px;
+	border: 1px solid rgba(181, 124, 255, 0.28);
+	background: rgba(181, 124, 255, 0.08);
+	color: #f3f0ff;
+	padding: 0.8rem 1rem;
+  }
+  
+  .time-range-note {
+	margin-top: 0.75rem;
+	font-size: 0.9rem;
+	color: rgba(255, 255, 255, 0.65);
+  }
+  .time-picker-row {
+	display: flex;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+  }
+  
+  .time-picker-row select {
+	border-radius: 12px;
+	border: 1px solid rgba(181, 124, 255, 0.28);
+	background: rgba(181, 124, 255, 0.08);
+	color: #f3f0ff;
+	padding: 0.75rem 0.9rem;
+	font-size: 0.95rem;
+  }
+  
+  .time-picker-row select:focus {
+	outline: none;
+	border-color: #b57cff;
+	box-shadow: 0 0 0 2px rgba(181, 124, 255, 0.2);
+  }
+
+  .active-time-range-label {
+	margin-top: 1rem;
+	padding: 0.85rem 1rem;
+	border-radius: 14px;
+	background: rgba(255, 255, 255, 0.04);
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	color: rgba(255, 255, 255, 0.82);
+	font-weight: 600;
+  }

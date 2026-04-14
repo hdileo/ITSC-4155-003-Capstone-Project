@@ -661,6 +661,9 @@ def build_schedule():
     data = request.get_json(silent=True) or {}
     selected_groups = data.get("selected_groups", "all")
 
+    daily_start_time = (data.get("daily_start_time") or "").strip()
+    daily_end_time = (data.get("daily_end_time") or "").strip()
+
     if selected_groups == []:
         return jsonify({
             "message": "No groups selected.",
@@ -682,9 +685,11 @@ def build_schedule():
         return jsonify({"error": "Max tasks per day must be a valid number."}), 400
 
     result = generate_schedule(
-        days=days,
-        max_tasks_per_day=max_tasks_per_day,
-        selected_groups=selected_groups
+    days=days,
+    max_tasks_per_day=max_tasks_per_day,
+    selected_groups=selected_groups,
+    daily_start_time=daily_start_time,
+    daily_end_time=daily_end_time
     )
 
     schedule = result.get("schedule", {})

@@ -200,6 +200,8 @@ const introContinueBtn = document.getElementById("introContinueBtn");
 const insightsList = document.getElementById("insightsList");
 
 
+
+
 /* ========================================================
   SECTION: Shared State
   Purpose: Store temporary values used across actions.
@@ -1565,9 +1567,10 @@ if (conflictOutput) {
   renderConflictAlerts(allConflicts);
 }
 
-  const startHour = 8;
-  const endHour = 18;
-  const totalHours = endHour - startHour;
+  const viewRange = getScheduleViewRange();
+ const startHour = viewRange.startHour;
+  const endHour = viewRange.endHour;
+  const totalHours = endHour - startHour + 1;
   const hourHeight = 72; // px per hour
   const gridHeight = totalHours * hourHeight;
 
@@ -1706,6 +1709,31 @@ laidOutTasks.forEach((task) => {
     scheduleMessage.textContent = "No tasks available to schedule.";
     scheduleMessage.className = "message error";
   }
+}
+
+function getScheduleViewRange() {
+  const startHour = document.getElementById("startHour")?.value;
+  const startMinute = document.getElementById("startMinute")?.value;
+  const startMeridiem = document.getElementById("startMeridiem")?.value;
+
+  const endHour = document.getElementById("endHour")?.value;
+  const endMinute = document.getElementById("endMinute")?.value;
+  const endMeridiem = document.getElementById("endMeridiem")?.value;
+
+  const dailyStartTime = convertTo24Hour(startHour, startMinute, startMeridiem);
+  const dailyEndTime = convertTo24Hour(endHour, endMinute, endMeridiem);
+
+  if (!dailyStartTime || !dailyEndTime) {
+    return {
+      startHour: 9,
+      endHour: 17
+    };
+  }
+
+  return {
+    startHour: Number(dailyStartTime.split(":")[0]),
+    endHour: Number(dailyEndTime.split(":")[0])
+  };
 }
 
 
@@ -1854,11 +1882,26 @@ async function refreshScheduleView() {
     ? Number(maxTasksPerDay.value || localStorage.getItem("momentumMaxTasksPerDay") || 4)
     : 4;
 
+    const dailyStartTime = convertTo24Hour(
+      document.getElementById("startHour")?.value,
+      document.getElementById("startMinute")?.value,
+      document.getElementById("startMeridiem")?.value
+    );
+    
+    const dailyEndTime = convertTo24Hour(
+      document.getElementById("endHour")?.value,
+      document.getElementById("endMinute")?.value,
+      document.getElementById("endMeridiem")?.value
+    );
+
+    updateActiveTimeRangeLabel(dailyStartTime, dailyEndTime);
+
   try {
     const res = await fetch("/api/schedule", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ days, max_tasks_per_day,selected_groups: getSelectedGroupsForSchedule() })
+      body: JSON.stringify({ days, max_tasks_per_day,selected_groups: getSelectedGroupsForSchedule(), daily_start_time: dailyStartTime,
+        daily_end_time: dailyEndTime })
     });
 
     const data = await res.json();
@@ -1959,11 +2002,32 @@ async function handleGenerateSchedule() {
     return;
   }
 
+  const dailyStartTime = convertTo24Hour(
+    document.getElementById("startHour")?.value,
+    document.getElementById("startMinute")?.value,
+    document.getElementById("startMeridiem")?.value
+  );
+
+  const dailyEndTime = convertTo24Hour(
+    document.getElementById("endHour")?.value,
+    document.getElementById("endMinute")?.value,
+    document.getElementById("endMeridiem")?.value
+  );
+
+  updateActiveTimeRangeLabel(dailyStartTime, dailyEndTime);
+
   try {
     const res = await fetch("/api/schedule", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ days, max_tasks_per_day,selected_groups: getSelectedGroupsForSchedule() })
+      credentials: "include",
+      body: JSON.stringify({
+        days,
+        max_tasks_per_day,
+        selected_groups: getSelectedGroupsForSchedule(),
+        daily_start_time: dailyStartTime,
+        daily_end_time: dailyEndTime
+      })
     });
 
     const data = await res.json();
@@ -1991,11 +2055,9 @@ async function handleGenerateSchedule() {
     updateScheduleLoad(scheduleData);
     generateScheduleSummary(scheduleData);
 
-    // Existing time conflicts
     const timeConflicts = detectAllScheduleConflicts(scheduleData);
     renderConflictAlerts(timeConflicts);
 
-    // New capacity conflicts
     const capacityConflicts = data.capacity_conflicts || [];
     renderCapacityConflicts(capacityConflicts, data.unscheduled_tasks || []);
 
@@ -2020,7 +2082,6 @@ async function handleGenerateSchedule() {
 if (generateScheduleBtn) {
   generateScheduleBtn.addEventListener("click", handleGenerateSchedule);
 }
-
 
 
 function renderCapacityConflicts(capacityConflicts, unscheduledTasks) {
@@ -2217,6 +2278,44 @@ function parseTimeToMinutes(timeStr) {
   return hours * 60 + minutes;
 }
 
+//Helper Schedule Functions 
+
+function format12HourLabel(hour24, minute = "00") {
+  let h = Number(hour24);
+  const suffix = h >= 12 ? "PM" : "AM";
+
+  if (h === 0) h = 12;
+  else if (h > 12) h -= 12;
+
+  return `${h}:${minute} ${suffix}`;
+}
+
+function updateActiveTimeRangeLabel(dailyStartTime, dailyEndTime) {
+  const label = document.getElementById("activeTimeRangeLabel");
+  if (!label) return;
+
+  if (!dailyStartTime || !dailyEndTime) {
+    label.textContent = "Viewing: 9:00 AM – 5:00 PM";
+    return;
+  }
+
+  const [startHour, startMinute] = dailyStartTime.split(":");
+  const [endHour, endMinute] = dailyEndTime.split(":");
+
+  label.textContent = `Viewing: ${format12HourLabel(startHour, startMinute)} – ${format12HourLabel(endHour, endMinute)}`;
+}
+
+
+function convertTo24Hour(hour, minute, meridiem) {
+  if (!hour || !minute || !meridiem) return "";
+
+  let h = Number(hour);
+
+  if (meridiem === "AM" && h === 12) h = 0;
+  if (meridiem === "PM" && h !== 12) h += 12;
+
+  return `${String(h).padStart(2, "0")}:${minute}`;
+}
 
 /** User Story #7: Conflict Detection  */
 

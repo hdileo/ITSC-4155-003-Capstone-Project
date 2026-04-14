@@ -242,6 +242,85 @@ components of the project.
               </div>
             </div>
 
+
+            <div class="schedule-time-range-card">
+              <div class="schedule-time-range-header">✦ Daily Time Range</div>
+            
+              <div class="time-range-row">
+                <div class="time-range-field">
+                  <label>Start Time</label>
+                  <div class="time-picker-row">
+                    <select id="startHour">
+                      <option value="">HH</option>
+                      <option value="1">1</option>
+                      <option value="2">2</option>
+                      <option value="3">3</option>
+                      <option value="4">4</option>
+                      <option value="5">5</option>
+                      <option value="6">6</option>
+                      <option value="7">7</option>
+                      <option value="8">8</option>
+                      <option value="9">9</option>
+                      <option value="10">10</option>
+                      <option value="11">11</option>
+                      <option value="12">12</option>
+                    </select>
+            
+                    <select id="startMinute">
+                      <option value="">MM</option>
+                      <option value="00">00</option>
+                      <option value="15">15</option>
+                      <option value="30">30</option>
+                      <option value="45">45</option>
+                    </select>
+            
+                    <select id="startMeridiem">
+                      <option value="">AM/PM</option>
+                      <option value="AM">AM</option>
+                      <option value="PM">PM</option>
+                    </select>
+                  </div>
+                </div>
+            
+                <div class="time-range-field">
+                  <label>End Time</label>
+                  <div class="time-picker-row">
+                    <select id="endHour">
+                      <option value="">HH</option>
+                      <option value="1">1</option>
+                      <option value="2">2</option>
+                      <option value="3">3</option>
+                      <option value="4">4</option>
+                      <option value="5">5</option>
+                      <option value="6">6</option>
+                      <option value="7">7</option>
+                      <option value="8">8</option>
+                      <option value="9">9</option>
+                      <option value="10">10</option>
+                      <option value="11">11</option>
+                      <option value="12">12</option>
+                    </select>
+            
+                    <select id="endMinute">
+                      <option value="">MM</option>
+                      <option value="00">00</option>
+                      <option value="15">15</option>
+                      <option value="30">30</option>
+                      <option value="45">45</option>
+                    </select>
+            
+                    <select id="endMeridiem">
+                      <option value="">AM/PM</option>
+                      <option value="AM">AM</option>
+                      <option value="PM">PM</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            
+              
+            </div>
+
             <div class="control-group">
               <label for="maxTasksPerDay">Max Tasks Per Day</label>
               <div class="select-wrap">
@@ -259,11 +338,19 @@ components of the project.
           <button id="generateScheduleBtn" class="generate-btn" type="button">
             Generate Schedule
           </button>
-
+          
           <p id="scheduleMessage" class="message"></p>
-        </section>
-
-        <section class="schedule-side-column">
+          
+          <div class="time-range-note">
+            Leave blank to use the default range: 9:00 AM – 5:00 PM
+          </div>
+          
+          <div id="activeTimeRangeLabel" class="active-time-range-label">
+            Viewing: 9:00 AM – 5:00 PM
+          </div>
+          </section>
+          
+          <section class="schedule-side-column">
           <article class="dashboard-panel">
             <div class="panel-header">
               <div>
