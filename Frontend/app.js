@@ -1437,6 +1437,7 @@ function getCompletedTasks(tasks) {
 
 
 
+let currentRenderedSchedule = {};
 const generateScheduleBtn = document.getElementById("generateScheduleBtn");
 const scheduleMessage = document.getElementById("scheduleMessage");
 const scheduleOutput = document.getElementById("scheduleOutput");
@@ -1934,6 +1935,7 @@ async function refreshScheduleView() {
     }
 
     const scheduleData = data.schedule || {};
+    currentRenderedSchedule = scheduleData;
     const hasScheduledTasks = Object.values(scheduleData).some(day => day.length > 0);
 
     if (!hasScheduledTasks) {
@@ -1964,6 +1966,7 @@ async function refreshScheduleView() {
     if (scheduleMessage) {
       scheduleMessage.textContent = "Failed to refresh schedule.";
       scheduleMessage.className = "message error";
+      currentRenderedSchedule = scheduleData;
     }
 
     if (scheduleOutput) {
@@ -2052,6 +2055,7 @@ async function handleGenerateSchedule() {
     scheduleMessage.className = "message success";
 
     const scheduleData = data.schedule || {};
+    currentRenderedSchedule = scheduleData;
 
     renderSchedule(scheduleData);
     updateScheduleLoad(scheduleData);
@@ -2071,6 +2075,7 @@ async function handleGenerateSchedule() {
 
     scheduleMessage.textContent = "Failed to generate schedule.";
     scheduleMessage.className = "message error";
+    currentRenderedSchedule = {};
 
     if (scheduleLoadFill) scheduleLoadFill.style.width = "0%";
     if (scheduleLoadPercent) scheduleLoadPercent.textContent = "0%";
@@ -2981,6 +2986,131 @@ if (introOverlay) {
     }
   }, 5000);
 }
+
+//THis is the Code Which Converts Our Schedule Data Into a CSV
+
+function flattenScheduleForCsv(schedule) {
+  const rows = [];
+
+  Object.keys(schedule).forEach((dateKey) => {
+    const tasksForDay = schedule[dateKey] || [];
+
+    tasksForDay.forEach((task) => {
+      rows.push({
+        title: task.title || "",
+        date: dateKey,
+        start_time: task.scheduled_start || "",
+        end_time: task.scheduled_end || "",
+        duration_minutes: task.duration_minutes || "",
+        category: task.category || "",
+        group_name: task.group_name || "",
+        status: task.status || "",
+        priority: task.priority || "",
+        effort_level: task.effort_level || ""
+      });
+    });
+  });
+
+  return rows;
+}
+
+function downloadScheduleAsCSV() {
+  // AC #4: Prevent if no schedule
+  if (!currentRenderedSchedule || Object.keys(currentRenderedSchedule).length === 0) {
+    alert("Please generate a schedule first.");
+    return;
+  }
+
+  const rows = flattenScheduleForCsv(currentRenderedSchedule);
+
+  if (!rows.length) {
+    alert("No tasks available to export.");
+    return;
+  }
+
+  // CSV headers
+  const headers = [
+    "Title",
+    "Date",
+    "Start Time",
+    "End Time",
+    "Duration (minutes)",
+    "Category",
+    "Group",
+    "Status",
+    "Priority",
+    "Effort Level"
+  ];
+
+  // Convert rows to CSV format
+  const csvContent = [
+    headers.join(","),
+
+    ...rows.map(row => [
+      row.title,
+      row.date,
+      row.start_time,
+      row.end_time,
+      row.duration_minutes,
+      row.category,
+      row.group_name,
+      row.status,
+      row.priority,
+      row.effort_level
+    ]
+      .map(value => `"${String(value).replace(/"/g, '""')}"`) // escape quotes
+      .join(",")
+    )
+  ].join("\n");
+
+  // Create downloadable file
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "momentum_schedule.csv";
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  URL.revokeObjectURL(url);
+}
+
+const downloadBtn = document.getElementById("downloadCsvBtn");
+
+if (downloadBtn) {
+  downloadBtn.addEventListener("click", downloadScheduleAsCSV);
+}
+
+function initAboutOrbParallax() {
+  const hero = document.querySelector(".about-hero");
+  const orbs = document.querySelectorAll(".orb");
+
+  if (!hero || !orbs.length) return;
+
+  hero.addEventListener("mousemove", (e) => {
+    const rect = hero.getBoundingClientRect();
+    const x = e.clientX - rect.left - rect.width / 2;
+    const y = e.clientY - rect.top - rect.height / 2;
+
+    orbs.forEach((orb, index) => {
+      const speed = (index + 1) * 0.015;
+      orb.style.transform = `translate(${x * speed}px, ${y * speed}px)`;
+    });
+  });
+
+  hero.addEventListener("mouseleave", () => {
+    orbs.forEach((orb) => {
+      orb.style.transform = "";
+    });
+  });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  initAboutOrbParallax();
+});
 
 
 
