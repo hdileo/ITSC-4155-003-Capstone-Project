@@ -3084,6 +3084,71 @@ if (downloadBtn) {
   downloadBtn.addEventListener("click", downloadScheduleAsCSV);
 }
 
+function formatDateForGoogle(dateStr) {
+  const date = new Date(dateStr);
+  return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
+}
+function downloadScheduleAsGoogleCalendarCSV() {
+  if (!currentRenderedSchedule || Object.keys(currentRenderedSchedule).length === 0) {
+    alert("Please generate a schedule first.");
+    return;
+  }
+
+  const rows = flattenScheduleForCsv(currentRenderedSchedule);
+
+  if (!rows.length) {
+    alert("No tasks available to export.");
+    return;
+  }
+
+  const headers = [
+    "Subject",
+    "Start Date",
+    "Start Time",
+    "End Date",
+    "End Time",
+    "All Day Event",
+    "Description",
+    "Location"
+  ];
+
+  const csvContent = [
+    headers.join(","),
+    ...rows.map(row => [
+      row.title,
+      formatDateForGoogle(row.date),
+      row.start_time,
+      formatDateForGoogle(row.date),
+      row.end_time,
+      "False",
+      `${row.category} | ${row.priority} | ${row.status}`,
+      row.group_name || ""
+    ]
+      .map(value => `"${String(value).replace(/"/g, '""')}"`)
+      .join(",")
+    )
+  ].join("\n");
+
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "momentum_google_calendar.csv";
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  URL.revokeObjectURL(url);
+}
+
+const googleDownloadBtn = document.getElementById("downloadGoogleCsvBtn");
+
+if (googleDownloadBtn) {
+  googleDownloadBtn.addEventListener("click", downloadScheduleAsGoogleCalendarCSV);
+}
+
 function initAboutOrbParallax() {
   const hero = document.querySelector(".about-hero");
   const orbs = document.querySelectorAll(".orb");

@@ -58,6 +58,7 @@ from datetime import datetime, timedelta
 from backend.app import create_app
 
 
+
 '''
     This File Contains all Our Application Testing -- Ranging from Unit Testing, to Integrated Testing, and BlackBox Testing
     They are Organized Based on the Tests in Sections Below
@@ -1362,7 +1363,308 @@ class ApiTests(unittest.TestCase):
 
         self.assertEqual(res.status_code, 400)
 
+    def test_schedule_uses_custom_time_range(self):
+        # fake login
+        with self.client.session_transaction() as sess:
+            sess["user"] = "testuser@email.com"
 
+        # Create task
+        self.client.post("/api/tasks", json={
+            "title": "Task A",
+            "due_date": "2026-04-20 23:59",
+            "priority": "High",
+            "duration_minutes": 60,
+            "effort_level": "Medium",
+            "category": "School"
+        })
+
+        response = self.client.post("/api/schedule", json={
+            "days": 7,
+            "max_tasks_per_day": 4,
+            "daily_start_time": "10:00",
+            "daily_end_time": "12:00"
+        })
+
+        print(response.status_code)
+        print(response.get_data(as_text=True))
+
+        assert response.status_code == 200
+
+    def test_schedule_respects_custom_time_bounds(self):
+        with self.client.session_transaction() as sess:
+            sess["user"] = "testuser@email.com"
+
+        self.client.post("/api/tasks", json={
+            "title": "Task A",
+            "due_date": "2026-04-20 23:59",
+            "priority": "High",
+            "duration_minutes": 60,
+            "effort_level": "Medium",
+            "category": "School"
+        })
+
+        response = self.client.post("/api/schedule", json={
+            "days": 7,
+            "max_tasks_per_day": 4,
+            "daily_start_time": "10:00",
+            "daily_end_time": "12:00"
+        })
+
+        assert response.status_code == 200
+        data = response.get_json()
+
+        scheduled_tasks = []
+        for day in data["schedule"].values():
+            scheduled_tasks.extend(day)
+
+        assert len(scheduled_tasks) == 1
+        task = scheduled_tasks[0]
+        assert task["scheduled_start"].startswith("10")
+        assert task["scheduled_end"].startswith("11")
+    def test_multiple_tasks_fit_within_time_range(self):
+        with self.client.session_transaction() as sess:
+            sess["user"] = "testuser@email.com"
+
+        # Two 60-min tasks → should both fit in 10–12 window
+        self.client.post("/api/tasks", json={
+            "title": "Task A",
+            "due_date": "2026-04-20 23:59",
+            "duration_minutes": 60,
+            "priority": "High",
+            "effort_level": "Medium",
+            "category": "School"
+        })
+
+        self.client.post("/api/tasks", json={
+            "title": "Task B",
+            "due_date": "2026-04-20 23:59",
+            "duration_minutes": 60,
+            "priority": "Medium",
+            "effort_level": "Medium",
+            "category": "Work"
+        })
+
+        response = self.client.post("/api/schedule", json={
+            "daily_start_time": "10:00",
+            "daily_end_time": "12:00"
+        })
+
+        assert response.status_code == 200
+        data = response.get_json()
+
+        tasks = []
+        for day in data["schedule"].values():
+            tasks.extend(day)
+
+        assert len(tasks) == 2
+        assert tasks[0]["scheduled_start"].startswith("10")
+        assert tasks[1]["scheduled_start"].startswith("11")
+
+    def test_single_task_longer_than_window_is_unscheduled(self):
+        with self.client.session_transaction() as sess:
+            sess["user"] = "testuser@email.com"
+
+        # 3-hour task, but window is only 2 hours
+        self.client.post("/api/tasks", json={
+            "title": "Long Task",
+            "due_date": "2026-04-20 23:59",
+            "duration_minutes": 180,
+            "priority": "High",
+            "effort_level": "High",
+            "category": "Work"
+        })
+
+        response = self.client.post("/api/schedule", json={
+            "daily_start_time": "10:00",
+            "daily_end_time": "12:00"
+        })
+
+        data = response.get_json()
+
+        assert len(data["unscheduled_tasks"]) == 1
+        assert data["unscheduled_tasks"][0]["title"] == "Long Task"
+
+    def test_schedule_filters_single_group(self):
+        with self.client.session_transaction() as sess:
+            sess["user"] = "testuser@email.com"
+
+        self.client.post("/api/tasks", json={
+            "title": "Math Homework",
+            "due_date": "2026-04-20 23:59",
+            "priority": "High",
+            "duration_minutes": 60,
+            "effort_level": "Medium",
+            "category": "School",
+            "group_name": "ITSC 3146"
+        })
+
+        self.client.post("/api/tasks", json={
+            "title": "Gym Workout",
+            "due_date": "2026-04-20 23:59",
+            "priority": "Medium",
+            "duration_minutes": 45,
+            "effort_level": "Medium",
+            "category": "Health",
+            "group_name": "Health"
+        })
+
+        response = self.client.post("/api/schedule", json={
+            "selected_groups": ["ITSC 3146"]
+        })
+
+        assert response.status_code == 200
+        data = response.get_json()
+
+        scheduled_titles = []
+        for day in data["schedule"].values():
+            scheduled_titles.extend(task["title"] for task in day)
+
+        assert "Math Homework" in scheduled_titles
+        assert "Gym Workout" not in scheduled_titles
+    def test_schedule_filters_multiple_groups(self):
+        with self.client.session_transaction() as sess:
+            sess["user"] = "testuser@email.com"
+
+        self.client.post("/api/tasks", json={
+            "title": "Math Homework",
+            "due_date": "2026-04-20 23:59",
+            "priority": "High",
+            "duration_minutes": 60,
+            "effort_level": "Medium",
+            "category": "School",
+            "group_name": "ITSC 3146"
+        })
+
+        self.client.post("/api/tasks", json={
+            "title": "Project Report",
+            "due_date": "2026-04-20 23:59",
+            "priority": "Medium",
+            "duration_minutes": 90,
+            "effort_level": "High",
+            "category": "Work",
+            "group_name": "ITSC 4155"
+        })
+
+        self.client.post("/api/tasks", json={
+            "title": "Gym Workout",
+            "due_date": "2026-04-20 23:59",
+         "priority": "Low",
+            "duration_minutes": 45,
+            "effort_level": "Low",
+            "category": "Health",
+            "group_name": "Health"
+        })
+
+        response = self.client.post("/api/schedule", json={
+            "selected_groups": ["ITSC 3146", "ITSC 4155"]
+        })
+
+        assert response.status_code == 200
+        data = response.get_json()
+
+        scheduled_titles = []
+        for day in data["schedule"].values():
+            scheduled_titles.extend(task["title"] for task in day)
+
+        assert "Math Homework" in scheduled_titles
+        assert "Project Report" in scheduled_titles
+        assert "Gym Workout" not in scheduled_titles
+    def test_schedule_all_groups_includes_all_tasks(self):
+        with self.client.session_transaction() as sess:
+            sess["user"] = "testuser@email.com"
+
+        self.client.post("/api/tasks", json={
+            "title": "Math Homework",
+            "due_date": "2026-04-20 23:59",
+            "priority": "High",
+            "duration_minutes": 60,
+            "effort_level": "Medium",
+            "category": "School",
+            "group_name": "ITSC 3146"
+        })
+
+        self.client.post("/api/tasks", json={
+            "title": "Gym Workout",
+            "due_date": "2026-04-20 23:59",
+            "priority": "Medium",
+            "duration_minutes": 45,
+            "effort_level": "Medium",
+            "category": "Health",
+            "group_name": "Health"
+        })
+
+        response = self.client.post("/api/schedule", json={
+            "selected_groups": "all"
+        })
+
+        assert response.status_code == 200
+        data = response.get_json()
+
+        scheduled_titles = []
+        for day in data["schedule"].values():
+            scheduled_titles.extend(task["title"] for task in day)
+
+        assert "Math Homework" in scheduled_titles
+        assert "Gym Workout" in scheduled_titles
+    def test_schedule_no_groups_selected_returns_empty_schedule(self):
+        with self.client.session_transaction() as sess:
+            sess["user"] = "testuser@email.com"
+
+        self.client.post("/api/tasks", json={
+            "title": "Math Homework",
+            "due_date": "2026-04-20 23:59",
+            "priority": "High",
+            "duration_minutes": 60,
+            "effort_level": "Medium",
+            "category": "School",
+            "group_name": "ITSC 3146"
+        })
+
+        response = self.client.post("/api/schedule", json={
+            "selected_groups": []
+        })
+
+        assert response.status_code == 200
+        data = response.get_json()
+
+        assert data["schedule"] == {}
+        assert data["message"] == "No groups selected."
+    def test_schedule_excludes_ungrouped_tasks_when_specific_group_selected(self):
+        with self.client.session_transaction() as sess:
+            sess["user"] = "testuser@email.com"
+
+        self.client.post("/api/tasks", json={
+            "title": "Grouped Task",
+            "due_date": "2026-04-20 23:59",
+            "priority": "High",
+            "duration_minutes": 60,
+            "effort_level": "Medium",
+            "category": "School",
+            "group_name": "ITSC 3146"
+        })
+
+        self.client.post("/api/tasks", json={
+            "title": "Ungrouped Task",
+            "due_date": "2026-04-20 23:59",
+            "priority": "Medium",
+            "duration_minutes": 45,
+            "effort_level": "Medium",
+            "category": "General"
+        })
+
+        response = self.client.post("/api/schedule", json={
+            "selected_groups": ["ITSC 3146"]
+        })
+
+        assert response.status_code == 200
+        data = response.get_json()
+
+        scheduled_titles = []
+        for day in data["schedule"].values():
+            scheduled_titles.extend(task["title"] for task in day)
+
+        assert "Grouped Task" in scheduled_titles
+        assert "Ungrouped Task" not in scheduled_titles
     
 
 
