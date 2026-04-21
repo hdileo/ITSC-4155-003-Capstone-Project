@@ -494,6 +494,72 @@ def delete_task(task_id):
 
 
 '''
+User Story: Bulk Delete Tasks
+Purpose:
+Delete multiple selected tasks at once and return
+the number of removed records.
+'''
+
+def bulk_delete_tasks(task_ids):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    placeholders = ",".join(["?"] * len(task_ids))
+
+    cursor.execute(
+        f"DELETE FROM tasks WHERE task_id IN ({placeholders})",
+        task_ids
+    )
+
+    conn.commit()
+    deleted_count = cursor.rowcount
+
+    conn.close()
+    return deleted_count
+
+
+'''
+User Story: Bulk Edit Tasks
+Purpose:
+Apply shared field updates to multiple selected tasks.
+Only chosen fields are updated.
+'''
+
+def bulk_update_tasks(task_ids, updates):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    fields = []
+    values = []
+
+    for key, value in updates.items():
+        fields.append(f"{key} = ?")
+        values.append(value)
+
+    if not fields:
+        conn.close()
+        return 0
+
+    placeholders = ",".join(["?"] * len(task_ids))
+
+    query = f"""
+        UPDATE tasks
+        SET {', '.join(fields)}
+        WHERE task_id IN ({placeholders})
+    """
+
+    values.extend(task_ids)
+
+    cursor.execute(query, values)
+    conn.commit()
+
+    updated_count = cursor.rowcount
+
+    conn.close()
+    return updated_count
+  
+
+'''
 User Story #12: Schedule Time Display 
 Purpose: Display Our Start and End Time in an Organized Format
 
