@@ -9,6 +9,8 @@
 <body class="app-page auth-page">
   <div class="auth-shell">
     <div class="auth-layout">
+
+      <!-- LOGIN PANEL -->
       <section class="dashboard-panel auth-login-panel">
         <div class="auth-login-glow"></div>
 
@@ -24,19 +26,22 @@
 
         <form id="loginForm" class="modern-task-form auth-form-modern">
           <div class="form-grid auth-form-grid">
+
+            <!-- EMAIL -->
             <label class="full-width">
-              <span>Username</span>
+              <span>Email</span>
               <div class="input-icon-wrap">
-                <span class="input-icon">👤</span>
+                <span class="input-icon">📧</span>
                 <input
-                  id="username"
-                  type="text"
-                  placeholder="Enter your username"
+                  id="email"
+                  type="email"
+                  placeholder="Enter your email"
                   class="auth-input-modern"
                 />
               </div>
             </label>
 
+            <!-- PASSWORD -->
             <label class="full-width">
               <span>Password</span>
               <div class="input-icon-wrap password-wrap">
@@ -52,6 +57,7 @@
                 </button>
               </div>
             </label>
+
           </div>
 
           <button type="submit" class="generate-btn auth-login-btn">
@@ -59,13 +65,14 @@
           </button>
 
           <p class="auth-helper-text">
-            Demo login: <strong>admin</strong> / <strong>momentum123</strong>
+            Demo login: <strong>testuser@email.com</strong> / <strong>securepass123</strong>
           </p>
 
           <p id="loginMessage" class="message"></p>
         </form>
       </section>
 
+      <!-- RIGHT SIDE -->
       <section class="auth-hero auth-login-hero">
         <div class="auth-hero-content">
           <div class="hero-badge">Focused planning. Smarter execution.</div>
@@ -81,16 +88,23 @@
           </div>
         </div>
       </section>
+
     </div>
   </div>
 
+  <!-- SCRIPT -->
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const form = document.getElementById("loginForm");
       const message = document.getElementById("loginMessage");
       const togglePasswordBtn = document.getElementById("togglePasswordBtn");
       const passwordInput = document.getElementById("password");
-    
+
+      function isValidEmail(email) {
+        return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
+      }
+
+      // Show / Hide password
       if (togglePasswordBtn && passwordInput) {
         togglePasswordBtn.addEventListener("click", () => {
           const isHidden = passwordInput.type === "password";
@@ -98,39 +112,54 @@
           togglePasswordBtn.textContent = isHidden ? "Hide" : "Show";
         });
       }
-    
+
+      // LOGIN
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
-    
-        const username = document.getElementById("username").value.trim();
+
+        const email = document.getElementById("email").value.trim();
         const password = passwordInput.value.trim();
-    
+
         message.textContent = "";
         message.className = "message";
-    
+
+        // Validation
+        if (!email || !password) {
+          message.textContent = "Email and password are required.";
+          message.classList.add("error");
+          return;
+        }
+
+        if (!isValidEmail(email)) {
+          message.textContent = "Please enter a valid email address.";
+          message.classList.add("error");
+          return;
+        }
+
         try {
           const res = await fetch("/api/login", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             credentials: "include",
-            body: JSON.stringify({ username, password })
+            body: JSON.stringify({ email, password })
           });
-    
+
           const data = await res.json();
-    
+
           if (res.ok) {
-            localStorage.setItem("username", username);
-    
+            localStorage.setItem("username", email);
+
             message.textContent = "✓ Login successful!";
             message.classList.add("success");
-    
+
             setTimeout(() => {
               window.location.href = "/loading.html";
-            }, 500);
+            }, 600);
           } else {
             message.textContent = data.error || "Login failed.";
             message.classList.add("error");
           }
+
         } catch (err) {
           console.error("login error:", err);
           message.textContent = "Server error. Try again.";

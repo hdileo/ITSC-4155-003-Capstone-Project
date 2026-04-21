@@ -155,12 +155,16 @@ structured, secure, and interactive full-stack system.
 
 ========================================================
 """
-from datetime import datetime
+from datetime import datetime, timedelta
 from functools import wraps
-from flask import Blueprint, jsonify, request, send_from_directory, session
+from flask import Blueprint, jsonify, request, send_from_directory, session, redirect
+from werkzeug.security import check_password_hash
 from .storage import create_task, get_all_tasks, update_task, delete_task, generate_schedule
-from datetime import datetime
+from app.database import get_connection
 import os
+import re
+
+
 
 # Main blueprints
 api = Blueprint("api", __name__)
@@ -169,8 +173,7 @@ auth = Blueprint("auth", __name__)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FRONTEND_DIR = os.path.abspath(os.path.join(BASE_DIR, "../../Frontend"))
 
-TEST_USERNAME = "admin"
-TEST_PASSWORD = "momentum123"
+
 
 
 # =========================
@@ -179,47 +182,116 @@ TEST_PASSWORD = "momentum123"
 
 
 
+def is_valid_email(email):
+    return re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email) is not None
 
 
-@auth.route("/api/login", methods=["POST"])
+
+@api.route("/api/login", methods=["POST"])
 def login():
     data = request.get_json(silent=True) or {}
 
-    username = (data.get("username") or data.get("email") or "").strip()
-    password = (data.get("password") or "").strip()
+    email = (data.get("email") or "").strip().lower()
+    password = data.get("password") or ""
 
-    if username != TEST_USERNAME or password != TEST_PASSWORD:
-        return jsonify({"error": "Invalid credentials"}), 401
+    # AC #3: blank fields
+    if not email or not password:
+        return jsonify({"error": "Email and password are required."}), 400
 
-    session["user"] = username
+    # AC #4: invalid email format
+    if not is_valid_email(email):
+        return jsonify({"error": "A valid email address is required."}), 400
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM users WHERE email = ?", (email,))
+    user = cursor.fetchone()
+
+    # AC #2: invalid email/password
+    if not user:
+        conn.close()
+        return jsonify({"error": "Invalid email or password."}), 401
+
+    # AC #5: temporary lockout
+    lock_until = user["lock_until"]
+    if lock_until:
+        lock_time = datetime.fromisoformat(lock_until)
+        if datetime.now() < lock_time:
+            conn.close()
+            return jsonify({
+                "error": "Too many login attempts. Please try again later."
+            }), 429
+
+    # Check password
+    if not check_password_hash(user["password_hash"], password):
+        failed_attempts = user["failed_attempts"] + 1
+        new_lock_until = None
+
+        if failed_attempts >= 5:
+            new_lock_until = (datetime.now() + timedelta(minutes=10)).isoformat()
+
+        cursor.execute("""
+            UPDATE users
+            SET failed_attempts = ?, lock_until = ?
+            WHERE user_id = ?
+        """, (failed_attempts, new_lock_until, user["user_id"]))
+
+        conn.commit()
+        conn.close()
+
+        if new_lock_until:
+            return jsonify({
+                "error": "Too many login attempts. Please try again later."
+            }), 429
+
+        return jsonify({"error": "Invalid email or password."}), 401
+
+    # Successful login: reset failures + create session
+    cursor.execute("""
+        UPDATE users
+        SET failed_attempts = 0, lock_until = NULL
+        WHERE user_id = ?
+    """, (user["user_id"],))
+    conn.commit()
+
+    session["user_id"] = user["user_id"]
+    session["user_email"] = user["email"]
+
+    conn.close()
 
     return jsonify({
-        "message": "Login successful",
-        "user": username
+        "message": "Login successful.",
+        "user": {
+            "user_id": user["user_id"],
+            "email": user["email"]
+        }
     }), 200
 
 
 def login_required(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
-        user = session.get("user")
-        if not user:
+        user_id = session.get("user_id")
+        if not user_id:
             return jsonify({"error": "Authentication required"}), 401
         return fn(*args, **kwargs)
     return wrapper
 
-
 @auth.route("/api/logout", methods=["POST"])
 def logout():
-    session.pop("user", None)
+    session.pop("user_id", None)
+    session.pop("user_email", None)
     return jsonify({"message": "Logged out successfully"}), 200
+    
 
 
 @auth.route("/api/me", methods=["GET"])
 def me():
-    user = session.get("user")
+    user_id = session.get("user_id")
+    user_email = session.get("user_email")
 
-    if not user:
+    if not user_id:
         return jsonify({
             "authenticated": False,
             "user": None
@@ -227,7 +299,10 @@ def me():
 
     return jsonify({
         "authenticated": True,
-        "user": user
+        "user": {
+            "user_id": user_id,
+            "email": user_email
+        }
     }), 200
 
 
@@ -273,6 +348,15 @@ def index():
 
 
 
+def page_login_required(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        user_id = session.get("user_id")
+        if not user_id:
+            return redirect("/login")
+        return fn(*args, **kwargs)
+    return wrapper
+
 # -----------------------------------------------
 # Route: Dashboard Page
 # -----------------------------------------------
@@ -284,6 +368,7 @@ def index():
 # Loads dashboard.html from the frontend directory.
 
 @api.route("/dashboard")
+@page_login_required
 def dashboard_page():
     return send_from_directory(FRONTEND_DIR, "dashboard.html")
 
@@ -298,6 +383,7 @@ def dashboard_page():
 # Loads tasks.html from the frontend directory.
 
 @api.route("/tasks")
+@page_login_required
 def tasks_page():
     return send_from_directory(FRONTEND_DIR, "tasks.html")
 
@@ -312,6 +398,7 @@ def tasks_page():
 # Loads schedule.html from the frontend directory.
 
 @api.route("/schedule")
+@page_login_required
 def schedule_page():
     return send_from_directory(FRONTEND_DIR, "schedule.html")
 

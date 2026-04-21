@@ -1,5 +1,6 @@
 import sqlite3
 from flask import current_app
+from werkzeug.security import generate_password_hash
 #Ariticial Intelligence was used to ORGANIZE Our NOTES, FIX BUGS, and WORK WITH INDENTATION ISSUES
 
 # Purpose:
@@ -12,6 +13,34 @@ def get_connection():
     conn = sqlite3.connect(db_name)
     conn.row_factory = sqlite3.Row
     return conn
+
+def seed_test_user():
+
+    conn = get_connection()
+
+    cursor = conn.cursor()
+
+    email = "testuser@email.com"
+
+    password_hash = generate_password_hash("securepass123")
+
+    cursor.execute("SELECT user_id FROM users WHERE email = ?", (email,))
+
+    existing_user = cursor.fetchone()
+
+    if not existing_user:
+
+        cursor.execute("""
+
+            INSERT INTO users (email, password_hash)
+
+            VALUES (?, ?)
+
+        """, (email, password_hash))
+
+    conn.commit()
+
+    conn.close()
 
 
 def init_db():
@@ -38,6 +67,24 @@ def init_db():
     )
     """)
 
+    cursor.execute("""
+
+    CREATE TABLE IF NOT EXISTS users (
+
+        user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+        email TEXT NOT NULL UNIQUE,
+
+        password_hash TEXT NOT NULL,
+
+        failed_attempts INTEGER NOT NULL DEFAULT 0,
+
+        lock_until TEXT
+
+    )
+
+    """)
+
     # -------------------------------
     # Migration (existing databases)
     # -------------------------------
@@ -58,3 +105,4 @@ def init_db():
 
     conn.commit()
     conn.close()
+    seed_test_user()
