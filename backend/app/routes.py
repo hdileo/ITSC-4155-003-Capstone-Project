@@ -158,7 +158,15 @@ structured, secure, and interactive full-stack system.
 from datetime import datetime
 from functools import wraps
 from flask import Blueprint, jsonify, request, send_from_directory, session
-from .storage import create_task, get_all_tasks, update_task, delete_task, generate_schedule
+from .storage import (
+    create_task,
+    get_all_tasks,
+    update_task,
+    delete_task,
+    bulk_delete_tasks,
+    bulk_update_tasks,
+    generate_schedule
+)
 from datetime import datetime
 import os
 
@@ -629,11 +637,45 @@ def remove_task(task_id):
     return jsonify({"message": "Task deleted successfully."}), 200
 
 
+# -----------------------------------------------
+# Route: Bulk Edit Tasks
+# -----------------------------------------------
+# Purpose:
+# Updates shared fields across multiple selected tasks.
+#
+# Features:
+# - Accepts selected task IDs
+# - Accepts only chosen fields to update
+# - Leaves all other fields unchanged
+# - Returns updated count
+#
+# Security:
+# - Protected by @login_required
+
+@api.route("/api/tasks/bulk-edit", methods=["PUT"])
+@login_required
+def edit_multiple_tasks():
+    data = request.get_json(silent=True) or {}
+
+    task_ids = data.get("task_ids", [])
+    updates = data.get("updates", {})
+
+    if not isinstance(task_ids, list) or not task_ids:
+        return jsonify({"error": "No tasks selected."}), 400
+
+    if not isinstance(updates, dict) or not updates:
+        return jsonify({"error": "No fields selected for update."}), 400
+
+    updated_count = bulk_update_tasks(task_ids, updates)
+
+    return jsonify({
+        "message": f"{updated_count} task(s) updated successfully."
+    }), 200
+
+
 # =========================
 # SCHEDULE ROUTE
 # =========================
-
-
 
 
 # -----------------------------------------------
