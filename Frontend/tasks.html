@@ -114,7 +114,6 @@
                   </div>
                 </label>
 
-
                 <div class="form-group">
                   <label for="groupName">Group Selection</label>
                   <input type="text" id="groupName" placeholder="e.g. ITSC 3146">
@@ -215,7 +214,6 @@
                   <input type="text" id="editGroupName" placeholder="e.g. ITSC 3146">
                 </div>
 
-
                 <label class="full-width">
                   <span>Category</span>
                   <div class="select-wrap">
@@ -229,8 +227,6 @@
                     </select>
                   </div>
                 </label>
-
-
 
                 <label class="full-width">
                   <span>Description</span>
@@ -257,6 +253,81 @@
               </div>
 
               <p id="editMessage" class="message"></p>
+            </form>
+          </section>
+
+          <!-- BULK EDIT SECTION -->
+          <section id="bulkEditSection" class="dashboard-panel edit-task-panel" style="display: none;">
+            <div class="panel-header">
+              <div>
+                <p class="panel-eyebrow">Bulk Update</p>
+                <h2>Bulk Edit Tasks</h2>
+              </div>
+            </div>
+
+            <form id="bulkEditForm" class="modern-task-form">
+              <div class="form-grid">
+                <label class="full-width">
+                  <span>
+                    <input type="checkbox" id="bulkEditCategoryToggle" />
+                    Update Category
+                  </span>
+                  <div class="select-wrap">
+                    <select id="bulkEditCategory">
+                      <option value="School">School</option>
+                      <option value="Health">Health</option>
+                      <option value="Personal">Personal</option>
+                      <option value="Social">Social</option>
+                      <option value="Work">Work</option>
+                      <option value="General">General</option>
+                    </select>
+                  </div>
+                </label>
+
+                <label class="full-width">
+                  <span>
+                    <input type="checkbox" id="bulkEditPriorityToggle" />
+                    Update Priority
+                  </span>
+                  <div class="select-wrap">
+                    <select id="bulkEditPriority">
+                      <option value="High">High</option>
+                      <option value="Medium">Medium</option>
+                      <option value="Low">Low</option>
+                    </select>
+                  </div>
+                </label>
+
+                <label class="full-width">
+                  <span>
+                    <input type="checkbox" id="bulkEditStatusToggle" />
+                    Update Status
+                  </span>
+                  <div class="select-wrap">
+                    <select id="bulkEditStatus">
+                      <option value="Pending">Pending</option>
+                      <option value="Not Started">Not Started</option>
+                      <option value="In Progress">In Progress</option>
+                      <option value="Completed">Completed</option>
+                    </select>
+                  </div>
+                </label>
+
+                <label class="full-width">
+                  <span>
+                    <input type="checkbox" id="bulkEditDueDateToggle" />
+                    Update Due Date
+                  </span>
+                  <input id="bulkEditDueDate" type="text" placeholder="Select due date and time" />
+                </label>
+              </div>
+
+              <div class="edit-form-actions">
+                <button type="submit" class="generate-btn">Apply Changes</button>
+                <button type="button" id="cancelBulkEditBtn" class="app-nav-btn secondary">Cancel</button>
+              </div>
+
+              <p id="bulkEditMessage" class="message"></p>
             </form>
           </section>
         </div>
@@ -287,10 +358,21 @@
             </div>
           </div>
 
+          <!-- BULK ACTION BUTTONS -->
+          <div class="edit-form-actions" style="margin-bottom: 16px;">
+            <button type="button" id="bulkEditBtn" class="generate-btn">Bulk Edit</button>
+            <button type="button" id="deleteSelectedBtn" class="app-nav-btn secondary">Delete Selected</button>
+          </div>
+
+          <p id="bulkActionMessage" class="message"></p>
+
           <div class="task-log-table-wrap">
             <table class="dashboard-table task-workspace-table">
               <thead>
                 <tr>
+                  <th>
+                    <input type="checkbox" id="selectAllTasks" />
+                  </th>
                   <th>Title</th>
                   <th>Status</th>
                   <th>Due Date</th>
@@ -300,7 +382,7 @@
               </thead>
               <tbody id="taskTableBody">
                 <tr>
-                  <td colspan="5">No tasks found.</td>
+                  <td colspan="6">No tasks found.</td>
                 </tr>
               </tbody>
             </table>

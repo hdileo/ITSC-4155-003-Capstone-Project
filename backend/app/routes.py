@@ -797,3 +797,75 @@ def build_schedule():
         "capacity_conflicts": capacity_conflicts,
         "unscheduled_tasks": unscheduled_tasks
     }), 200
+
+@api.route("/api/tasks/bulk-delete", methods=["POST"])
+@login_required
+def bulk_delete_tasks():
+    data = request.get_json(silent=True) or {}
+    task_ids = data.get("task_ids", [])
+
+    if not task_ids or not isinstance(task_ids, list):
+        return jsonify({"error": "Select at least one task to delete."}), 400
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    placeholders = ",".join(["?"] * len(task_ids))
+    cursor.execute(f"DELETE FROM tasks WHERE task_id IN ({placeholders})", task_ids)
+
+    deleted_count = len(task_ids)
+    conn.commit()
+    conn.close()
+
+    return jsonify({
+        "message": f"{deleted_count} task(s) deleted successfully."
+    }), 200
+
+
+
+@api.route("/api/tasks/bulk-edit", methods=["PUT"])
+@login_required
+def bulk_edit_tasks():
+    data = request.get_json(silent=True) or {}
+    task_ids = data.get("task_ids", [])
+    updates = data.get("updates", {})
+
+    if not task_ids or not isinstance(task_ids, list):
+        return jsonify({"error": "Select at least one task to edit."}), 400
+
+    if not updates or not isinstance(updates, dict):
+        return jsonify({"error": "No updates were provided."}), 400
+
+    allowed_fields = {"category", "priority", "due_date", "status"}
+    filtered_updates = {k: v for k, v in updates.items() if k in allowed_fields}
+
+    if not filtered_updates:
+        return jsonify({"error": "No valid fields selected for bulk edit."}), 400
+
+    if "priority" in filtered_updates and filtered_updates["priority"] not in {"Low", "Medium", "High"}:
+        return jsonify({"error": "Priority must be Low, Medium, or High."}), 400
+
+    if "status" in filtered_updates and filtered_updates["status"] not in {"Pending", "Not Started", "In Progress", "Completed"}:
+        return jsonify({"error": "Status must be Pending, Not Started, In Progress, or Completed."}), 400
+
+    if "due_date" in filtered_updates and not is_valid_datetime_string(filtered_updates["due_date"]):
+        return jsonify({"error": "Invalid due date format. Use YYYY-MM-DD HH:MM"}), 400
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    set_clause = ", ".join([f"{field} = ?" for field in filtered_updates.keys()])
+    values = list(filtered_updates.values())
+
+    placeholders = ",".join(["?"] * len(task_ids))
+    query = f"UPDATE tasks SET {set_clause} WHERE task_id IN ({placeholders})"
+
+    cursor.execute(query, values + task_ids)
+
+    updated_count = len(task_ids)
+    conn.commit()
+    conn.close()
+
+    return jsonify({
+        "message": f"{updated_count} task(s) updated successfully."
+    }), 200

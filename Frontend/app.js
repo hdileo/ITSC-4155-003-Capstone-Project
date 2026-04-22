@@ -200,6 +200,32 @@ const introContinueBtn = document.getElementById("introContinueBtn");
 const insightsList = document.getElementById("insightsList");
 
 
+//Bulk Edit
+const selectedTaskIds = new Set();
+
+const selectAllTasks = document.getElementById("selectAllTasks");
+const deleteSelectedBtn = document.getElementById("deleteSelectedBtn");
+const bulkEditBtn = document.getElementById("bulkEditBtn");
+const bulkActionMessage = document.getElementById("bulkActionMessage");
+
+const bulkEditSection = document.getElementById("bulkEditSection");
+const bulkEditForm = document.getElementById("bulkEditForm");
+const bulkEditMessage = document.getElementById("bulkEditMessage");
+const cancelBulkEditBtn = document.getElementById("cancelBulkEditBtn");
+
+const bulkEditCategoryToggle = document.getElementById("bulkEditCategoryToggle");
+const bulkEditCategory = document.getElementById("bulkEditCategory");
+
+const bulkEditPriorityToggle = document.getElementById("bulkEditPriorityToggle");
+const bulkEditPriority = document.getElementById("bulkEditPriority");
+
+const bulkEditStatusToggle = document.getElementById("bulkEditStatusToggle");
+const bulkEditStatus = document.getElementById("bulkEditStatus");
+
+const bulkEditDueDateToggle = document.getElementById("bulkEditDueDateToggle");
+const bulkEditDueDate = document.getElementById("bulkEditDueDate");
+
+
 
 
 /* ========================================================
@@ -435,7 +461,7 @@ async function loadTaskTable() {
   if (!tasks.length) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="5">No tasks found${searchTerm ? ` matching "${searchTerm}"` : "."}</td>
+        <td colspan="6">No tasks found${searchTerm ? ` matching "${searchTerm}"` : "."}</td>
       </tr>
     `;
     renderAssignmentCollections([]);
@@ -603,15 +629,34 @@ Render task rows into the Task Log table, including status,
 priority, meta pills, and action buttons.
 */
 
+function updateSelectAllCheckboxState() {
+  if (!selectAllTasks || !tbody) return;
+
+  const rowCheckboxes = tbody.querySelectorAll(".task-row-checkbox");
+
+  if (!rowCheckboxes.length) {
+    selectAllTasks.checked = false;
+    selectAllTasks.indeterminate = false;
+    return;
+  }
+
+  const checkedCount = Array.from(rowCheckboxes).filter(cb => cb.checked).length;
+
+  selectAllTasks.checked = checkedCount === rowCheckboxes.length;
+  selectAllTasks.indeterminate =
+    checkedCount > 0 && checkedCount < rowCheckboxes.length;
+}
+
 function renderTasks(tasks) {
   tbody.innerHTML = "";
 
   if (!tasks.length) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="5">Lets make a Task! Welcome to Momentum </td>
+        <td colspan="6">Lets make a Task! Welcome to Momentum</td>
       </tr>
     `;
+    updateSelectAllCheckboxState();
     return;
   }
 
@@ -647,6 +692,14 @@ function renderTasks(tasks) {
 
     row.innerHTML = `
       <td>
+        <input
+          type="checkbox"
+          class="task-row-checkbox"
+          value="${task.id}"
+          ${selectedTaskIds.has(Number(task.id)) ? "checked" : ""}
+        />
+      </td>
+      <td>
         <div class="task-title-cell">
           <div class="task-main-title">${overdueDot}${task.title}</div>
           ${task.description ? `<div class="task-description-preview">${task.description}</div>` : ""}
@@ -655,7 +708,6 @@ function renderTasks(tasks) {
             <span class="task-meta-pill">${task.duration_minutes} min</span>
             <span class="task-meta-pill">${task.effort_level} Effort</span>
             <span class="task-meta-pill">Start: ${formattedStartAfter}</span>
-            ${task.notes ? `<span class="task-meta-pill">Notes</span>` : ""}
             ${task.group_name ? `<span class="task-meta-pill group-pill">${task.group_name}</span>` : ""}
           </div>
         </div>
@@ -669,6 +721,22 @@ function renderTasks(tasks) {
         ${task.status !== "Completed" ? '<button type="button" class="complete-btn">Complete</button>' : ""}
       </td>
     `;
+
+    const rowCheckbox = row.querySelector(".task-row-checkbox");
+    if (rowCheckbox) {
+      rowCheckbox.addEventListener("change", (e) => {
+        const taskId = Number(task.id);
+
+        if (e.target.checked) {
+          selectedTaskIds.add(taskId);
+        } else {
+          selectedTaskIds.delete(taskId);
+        }
+        console.log("Checkbox changed for task:", taskId);
+        console.log("selectedTaskIds now:", Array.from(selectedTaskIds));
+        updateSelectAllCheckboxState();
+      });
+    }
 
     row.querySelector(".edit-btn").addEventListener("click", () => {
       openEditForm(task);
@@ -687,6 +755,8 @@ function renderTasks(tasks) {
 
     tbody.appendChild(row);
   });
+
+  updateSelectAllCheckboxState();
 }
 
 /*
@@ -936,11 +1006,13 @@ function initDatePickers() {
   const startAfter = document.getElementById("startAfter");
   const editDueDate = document.getElementById("editDueDate");
   const editStartAfter = document.getElementById("editStartAfter");
+  const bulkEditDueDate = document.getElementById("bulkEditDueDate");
 
   if (dueDate) flatpickr(dueDate, pickerConfig);
   if (startAfter) flatpickr(startAfter, pickerConfig);
   if (editDueDate) flatpickr(editDueDate, pickerConfig);
   if (editStartAfter) flatpickr(editStartAfter, pickerConfig);
+  if (bulkEditDueDate) flatpickr(bulkEditDueDate, pickerConfig);
 }
 
 function highlightUpdatedFields(id, updatedTask) {
@@ -950,19 +1022,19 @@ function highlightUpdatedFields(id, updatedTask) {
   const cells = row.children;
 
   if (updatedTask.title !== originalTaskData.title) {
-    cells[0].classList.add("updated-field");
-  }
-
-  if (updatedTask.status !== originalTaskData.status) {
     cells[1].classList.add("updated-field");
   }
 
-  if (updatedTask.due_date !== originalTaskData.due_date) {
+  if (updatedTask.status !== originalTaskData.status) {
     cells[2].classList.add("updated-field");
   }
 
-  if (updatedTask.priority !== originalTaskData.priority) {
+  if (updatedTask.due_date !== originalTaskData.due_date) {
     cells[3].classList.add("updated-field");
+  }
+
+  if (updatedTask.priority !== originalTaskData.priority) {
+    cells[4].classList.add("updated-field");
   }
 
   if (
@@ -971,7 +1043,7 @@ function highlightUpdatedFields(id, updatedTask) {
     updatedTask.start_after !== originalTaskData.start_after ||
     updatedTask.category !== originalTaskData.category
   ) {
-    cells[0].classList.add("updated-field");
+    cells[1].classList.add("updated-field");
   }
 
   row.classList.add("updated-row");
@@ -3149,6 +3221,235 @@ if (googleDownloadBtn) {
   googleDownloadBtn.addEventListener("click", downloadScheduleAsGoogleCalendarCSV);
 }
 
+function getSelectedTaskIds() {
+  return Array.from(selectedTaskIds);
+}
+
+function clearBulkMessages() {
+  if (bulkActionMessage) {
+    bulkActionMessage.textContent = "";
+    bulkActionMessage.className = "message";
+  }
+
+  if (bulkEditMessage) {
+    bulkEditMessage.textContent = "";
+    bulkEditMessage.className = "message";
+  }
+}
+
+function showBulkActionMessage(message, type = "error") {
+  if (!bulkActionMessage) return;
+  bulkActionMessage.textContent = message;
+  bulkActionMessage.className = `message ${type}`;
+}
+
+function showBulkEditMessage(message, type = "error") {
+  if (!bulkEditMessage) return;
+  bulkEditMessage.textContent = message;
+  bulkEditMessage.className = `message ${type}`;
+}
+
+function updateSelectAllCheckboxState() {
+  if (!selectAllTasks || !tbody) return;
+
+  const rowCheckboxes = tbody.querySelectorAll(".task-row-checkbox");
+
+  if (!rowCheckboxes.length) {
+    selectAllTasks.checked = false;
+    selectAllTasks.indeterminate = false;
+    return;
+  }
+
+  const checkedCount = Array.from(rowCheckboxes).filter(cb => cb.checked).length;
+
+  selectAllTasks.checked = checkedCount === rowCheckboxes.length;
+  selectAllTasks.indeterminate =
+    checkedCount > 0 && checkedCount < rowCheckboxes.length;
+}
+
+function closeBulkEditSection() {
+  if (!bulkEditSection) return;
+
+  bulkEditSection.style.display = "none";
+
+  if (bulkEditForm) {
+    bulkEditForm.reset();
+  }
+
+  if (bulkEditMessage) {
+    bulkEditMessage.textContent = "";
+    bulkEditMessage.className = "message";
+  }
+}
+
+function openBulkEditSection() {
+  if (!bulkEditSection) return;
+
+  bulkEditSection.style.display = "block";
+
+  if (bulkEditMessage) {
+    bulkEditMessage.textContent = "";
+    bulkEditMessage.className = "message";
+  }
+
+  bulkEditSection.scrollIntoView({
+    behavior: "smooth",
+    block: "start"
+  });
+}
+
+function getBulkEditUpdates() {
+  const updates = {};
+
+  if (bulkEditCategoryToggle?.checked) {
+    updates.category = bulkEditCategory.value;
+  }
+
+  if (bulkEditPriorityToggle?.checked) {
+    updates.priority = bulkEditPriority.value;
+  }
+
+  if (bulkEditStatusToggle?.checked) {
+    updates.status = bulkEditStatus.value;
+  }
+
+  if (bulkEditDueDateToggle?.checked) {
+    const dueInput = bulkEditDueDate.value.trim();
+
+    if (!dueInput) {
+      return { error: "Bulk edit due date is required when selected." };
+    }
+
+    const parsed = parseDateInput(dueInput);
+
+    if (!parsed || isNaN(parsed.getTime())) {
+      return { error: "Bulk edit due date is invalid." };
+    }
+
+    updates.due_date = formatForBackend(dueInput);
+  }
+
+  return { updates };
+}
+
+async function handleBulkDelete() {
+  clearBulkMessages();
+
+  const taskIds = getSelectedTaskIds();
+  console.log("Sending bulk delete IDs:", JSON.stringify(taskIds));
+
+  if (!taskIds.length) {
+    showBulkActionMessage("Select at least one task before deleting.");
+    return;
+  }
+
+  const confirmed = window.confirm("Are you sure you want to delete the selected tasks?");
+  if (!confirmed) {
+    showBulkActionMessage("Bulk delete canceled.", "success");
+    return;
+  }
+
+  try {
+    const res = await fetch("/api/tasks/bulk-delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ task_ids: taskIds })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      showBulkActionMessage(data.error || "Bulk delete failed.");
+      return;
+    }
+
+    selectedTaskIds.clear();
+
+    if (selectAllTasks) {
+      selectAllTasks.checked = false;
+      selectAllTasks.indeterminate = false;
+    }
+
+    showBulkActionMessage(data.message || "Selected tasks deleted successfully.", "success");
+
+    await loadTaskTable();
+    await refreshScheduleView();
+    await loadDashboard();
+    closeBulkEditSection();
+  } catch (err) {
+    console.error(err);
+    showBulkActionMessage("Bulk delete failed.");
+  }
+}
+async function handleBulkEditSubmit(e) {
+  e.preventDefault();
+  clearBulkMessages();
+
+  const taskIds = getSelectedTaskIds();
+
+  if (!taskIds.length) {
+    showBulkEditMessage("Select at least one task before bulk editing.");
+    return;
+  }
+
+  const { updates, error } = getBulkEditUpdates();
+
+  if (error) {
+    showBulkEditMessage(error);
+    return;
+  }
+
+  if (!updates || !Object.keys(updates).length) {
+    showBulkEditMessage("Choose at least one field to update.");
+    return;
+  }
+
+  console.log("Sending bulk edit IDs:", JSON.stringify(taskIds));
+  console.log("Sending bulk updates:", JSON.stringify(updates));
+
+  try {
+    const res = await fetch("/api/tasks/bulk-edit", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        task_ids: taskIds,
+        updates
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      showBulkEditMessage(data.error || "Bulk edit failed.");
+      return;
+    }
+
+    showBulkEditMessage(data.message || "Selected tasks updated successfully.", "success");
+
+    selectedTaskIds.clear();
+
+    if (selectAllTasks) {
+      selectAllTasks.checked = false;
+      selectAllTasks.indeterminate = false;
+    }
+
+    await loadTaskTable();
+    await refreshScheduleView();
+    await loadDashboard();
+
+    setTimeout(() => {
+      closeBulkEditSection();
+    }, 800);
+  } catch (err) {
+    console.error(err);
+    showBulkEditMessage("Bulk edit failed.");
+  }
+}
+
+
+
 function initAboutOrbParallax() {
   const hero = document.querySelector(".about-hero");
   const orbs = document.querySelectorAll(".orb");
@@ -3179,6 +3480,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
+document.addEventListener("DOMContentLoaded", () => {
+
+  
+
+ 
+
+});
+
 
 
 // ---------- Initial load ----------
@@ -3208,6 +3517,60 @@ if (scheduleOutput) {
   refreshScheduleView();
 }
 
+
+document.addEventListener("DOMContentLoaded", () => {
+
+  if (selectAllTasks) {
+    selectAllTasks.addEventListener("change", (e) => {
+      const checked = e.target.checked;
+      const rowCheckboxes = tbody ? tbody.querySelectorAll(".task-row-checkbox") : [];
+  
+      rowCheckboxes.forEach(cb => {
+        cb.checked = checked;
+        const taskId = Number(cb.value);
+  
+        if (checked) {
+          selectedTaskIds.add(taskId);
+        } else {
+          selectedTaskIds.delete(taskId);
+        }
+      });
+  
+      updateSelectAllCheckboxState();
+    });
+  }
+  
+  if (deleteSelectedBtn) {
+    deleteSelectedBtn.addEventListener("click", handleBulkDelete);
+  }
+  
+  if (bulkEditBtn) {
+    bulkEditBtn.addEventListener("click", () => {
+      clearBulkMessages();
+  
+      if (!getSelectedTaskIds().length) {
+        showBulkActionMessage("Select at least one task before bulk editing.");
+        return;
+      }
+  
+      openBulkEditSection();
+    });
+  }
+  
+  if (bulkEditForm) {
+    bulkEditForm.addEventListener("submit", handleBulkEditSubmit);
+  }
+  
+  if (cancelBulkEditBtn) {
+    cancelBulkEditBtn.addEventListener("click", closeBulkEditSection);
+  }
+  
+
+  
+
+ 
+
+});
 
 
 /*
