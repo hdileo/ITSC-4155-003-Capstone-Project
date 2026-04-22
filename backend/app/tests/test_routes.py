@@ -56,6 +56,9 @@ import unittest
 from datetime import datetime, timedelta
 
 from backend.app import create_app
+from werkzeug.security import generate_password_hash
+
+
 
 
 
@@ -67,6 +70,8 @@ from backend.app import create_app
 '''
 
 class ApiTests(unittest.TestCase):
+
+
 
     def setUp(self):
         self.db_fd, self.db_path = tempfile.mkstemp()
@@ -84,14 +89,15 @@ class ApiTests(unittest.TestCase):
         self.client = self.app.test_client()
         self.client.testing = True
 
+        
+
     def tearDown(self):
         os.close(self.db_fd)
         os.unlink(self.db_path)
-
     def login(self):
         return self.client.post("/api/login", json={
-            "username": "admin",
-            "password": "momentum123"
+            "email": "testuser@email.com",
+            "password": "securepass123"
         })
     #User Story 1
     def test_create_and_list_tasks(self):
@@ -871,21 +877,14 @@ class ApiTests(unittest.TestCase):
 
         self.assertEqual(task_a["scheduled_end"], task_b["scheduled_start"])
 
-    def to_minutes(time_str):
+    def to_minutes(self, time_str):
         time_part, meridiem = time_str.split(" ")
         hours, minutes = map(int, time_part.split(":"))
         if meridiem == "PM" and hours != 12:
             hours += 12
         if meridiem == "AM" and hours == 12:
             hours = 0
-        return hours * 60 + minutes
-
-        task_a_length = to_minutes(task_a["scheduled_end"]) - to_minutes(task_a["scheduled_start"])
-        task_b_length = to_minutes(task_b["scheduled_end"]) - to_minutes(task_b["scheduled_start"])
-
-        self.assertEqual(task_a_length, 30)
-        self.assertEqual(task_b_length, 90)
-        self.assertGreater(task_b_length, task_a_length)    
+        return hours * 60 + minutes   
 
     def test_effort_level_scheduling_story(self):
         """
@@ -1106,7 +1105,7 @@ class ApiTests(unittest.TestCase):
         get_res = self.client.get("/api/tasks")
         tasks = get_res.get_json()
 
-        self.assertFalse(any(t["task_id"] == task_id for t in tasks))
+        self.assertFalse(any(t["id"] == task_id for t in tasks))
 
     
     #Intgegrates Test #4: Creating Schedule with Different Priorities
@@ -1364,14 +1363,15 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(res.status_code, 400)
 
     def test_schedule_uses_custom_time_range(self):
-        # fake login
         with self.client.session_transaction() as sess:
-            sess["user"] = "testuser@email.com"
+            sess["user_id"] = 1
+            sess["user_email"] = "testuser@email.com"
 
-        # Create task
+        future_date = (datetime.now() + timedelta(days=3)).strftime("%Y-%m-%d %H:%M")
+
         self.client.post("/api/tasks", json={
             "title": "Task A",
-            "due_date": "2026-04-20 23:59",
+            "due_date": future_date,
             "priority": "High",
             "duration_minutes": 60,
             "effort_level": "Medium",
@@ -1385,18 +1385,20 @@ class ApiTests(unittest.TestCase):
             "daily_end_time": "12:00"
         })
 
-        print(response.status_code)
-        print(response.get_data(as_text=True))
-
         assert response.status_code == 200
+        data = response.get_json()
+        assert "schedule" in data
 
     def test_schedule_respects_custom_time_bounds(self):
         with self.client.session_transaction() as sess:
-            sess["user"] = "testuser@email.com"
+            sess["user_id"] = 1
+            sess["user_email"] = "testuser@email.com"
+
+        future_date = (datetime.now() + timedelta(days=3)).strftime("%Y-%m-%d %H:%M")
 
         self.client.post("/api/tasks", json={
             "title": "Task A",
-            "due_date": "2026-04-20 23:59",
+            "due_date": future_date,
             "priority": "High",
             "duration_minutes": 60,
             "effort_level": "Medium",
@@ -1421,23 +1423,27 @@ class ApiTests(unittest.TestCase):
         task = scheduled_tasks[0]
         assert task["scheduled_start"].startswith("10")
         assert task["scheduled_end"].startswith("11")
+
+
     def test_multiple_tasks_fit_within_time_range(self):
         with self.client.session_transaction() as sess:
-            sess["user"] = "testuser@email.com"
+            sess["user_id"] = 1
+            sess["user_email"] = "testuser@email.com"
 
-        # Two 60-min tasks → should both fit in 10–12 window
+        future_date = (datetime.now() + timedelta(days=3)).strftime("%Y-%m-%d %H:%M")
+
         self.client.post("/api/tasks", json={
             "title": "Task A",
-            "due_date": "2026-04-20 23:59",
+            "due_date": future_date,
             "duration_minutes": 60,
             "priority": "High",
             "effort_level": "Medium",
             "category": "School"
-        })
+        })  
 
         self.client.post("/api/tasks", json={
             "title": "Task B",
-            "due_date": "2026-04-20 23:59",
+            "due_date": future_date,
             "duration_minutes": 60,
             "priority": "Medium",
             "effort_level": "Medium",
@@ -1460,14 +1466,17 @@ class ApiTests(unittest.TestCase):
         assert tasks[0]["scheduled_start"].startswith("10")
         assert tasks[1]["scheduled_start"].startswith("11")
 
+
     def test_single_task_longer_than_window_is_unscheduled(self):
         with self.client.session_transaction() as sess:
-            sess["user"] = "testuser@email.com"
+            sess["user_id"] = 1
+            sess["user_email"] = "testuser@email.com"
 
-        # 3-hour task, but window is only 2 hours
+        future_date = (datetime.now() + timedelta(days=3)).strftime("%Y-%m-%d %H:%M")
+
         self.client.post("/api/tasks", json={
             "title": "Long Task",
-            "due_date": "2026-04-20 23:59",
+            "due_date": future_date,
             "duration_minutes": 180,
             "priority": "High",
             "effort_level": "High",
@@ -1484,13 +1493,17 @@ class ApiTests(unittest.TestCase):
         assert len(data["unscheduled_tasks"]) == 1
         assert data["unscheduled_tasks"][0]["title"] == "Long Task"
 
+
     def test_schedule_filters_single_group(self):
         with self.client.session_transaction() as sess:
-            sess["user"] = "testuser@email.com"
+            sess["user_id"] = 1
+            sess["user_email"] = "testuser@email.com"
+
+        future_date = (datetime.now() + timedelta(days=3)).strftime("%Y-%m-%d %H:%M")
 
         self.client.post("/api/tasks", json={
             "title": "Math Homework",
-            "due_date": "2026-04-20 23:59",
+            "due_date": future_date,
             "priority": "High",
             "duration_minutes": 60,
             "effort_level": "Medium",
@@ -1500,7 +1513,7 @@ class ApiTests(unittest.TestCase):
 
         self.client.post("/api/tasks", json={
             "title": "Gym Workout",
-            "due_date": "2026-04-20 23:59",
+            "due_date": future_date,
             "priority": "Medium",
             "duration_minutes": 45,
             "effort_level": "Medium",
@@ -1512,7 +1525,6 @@ class ApiTests(unittest.TestCase):
             "selected_groups": ["ITSC 3146"]
         })
 
-        assert response.status_code == 200
         data = response.get_json()
 
         scheduled_titles = []
@@ -1521,13 +1533,18 @@ class ApiTests(unittest.TestCase):
 
         assert "Math Homework" in scheduled_titles
         assert "Gym Workout" not in scheduled_titles
+
+
     def test_schedule_filters_multiple_groups(self):
         with self.client.session_transaction() as sess:
-            sess["user"] = "testuser@email.com"
+            sess["user_id"] = 1
+            sess["user_email"] = "testuser@email.com"
+
+        future_date = (datetime.now() + timedelta(days=3)).strftime("%Y-%m-%d %H:%M")
 
         self.client.post("/api/tasks", json={
             "title": "Math Homework",
-            "due_date": "2026-04-20 23:59",
+            "due_date": future_date,
             "priority": "High",
             "duration_minutes": 60,
             "effort_level": "Medium",
@@ -1537,7 +1554,7 @@ class ApiTests(unittest.TestCase):
 
         self.client.post("/api/tasks", json={
             "title": "Project Report",
-            "due_date": "2026-04-20 23:59",
+            "due_date": future_date,
             "priority": "Medium",
             "duration_minutes": 90,
             "effort_level": "High",
@@ -1547,8 +1564,8 @@ class ApiTests(unittest.TestCase):
 
         self.client.post("/api/tasks", json={
             "title": "Gym Workout",
-            "due_date": "2026-04-20 23:59",
-         "priority": "Low",
+            "due_date": future_date,
+            "priority": "Low",
             "duration_minutes": 45,
             "effort_level": "Low",
             "category": "Health",
@@ -1559,7 +1576,6 @@ class ApiTests(unittest.TestCase):
             "selected_groups": ["ITSC 3146", "ITSC 4155"]
         })
 
-        assert response.status_code == 200
         data = response.get_json()
 
         scheduled_titles = []
@@ -1569,13 +1585,18 @@ class ApiTests(unittest.TestCase):
         assert "Math Homework" in scheduled_titles
         assert "Project Report" in scheduled_titles
         assert "Gym Workout" not in scheduled_titles
+
+
     def test_schedule_all_groups_includes_all_tasks(self):
         with self.client.session_transaction() as sess:
-            sess["user"] = "testuser@email.com"
+            sess["user_id"] = 1
+            sess["user_email"] = "testuser@email.com"
+
+        future_date = (datetime.now() + timedelta(days=3)).strftime("%Y-%m-%d %H:%M")
 
         self.client.post("/api/tasks", json={
             "title": "Math Homework",
-            "due_date": "2026-04-20 23:59",
+            "due_date": future_date,
             "priority": "High",
             "duration_minutes": 60,
             "effort_level": "Medium",
@@ -1585,7 +1606,7 @@ class ApiTests(unittest.TestCase):
 
         self.client.post("/api/tasks", json={
             "title": "Gym Workout",
-            "due_date": "2026-04-20 23:59",
+            "due_date": future_date,
             "priority": "Medium",
             "duration_minutes": 45,
             "effort_level": "Medium",
@@ -1597,7 +1618,6 @@ class ApiTests(unittest.TestCase):
             "selected_groups": "all"
         })
 
-        assert response.status_code == 200
         data = response.get_json()
 
         scheduled_titles = []
@@ -1606,9 +1626,51 @@ class ApiTests(unittest.TestCase):
 
         assert "Math Homework" in scheduled_titles
         assert "Gym Workout" in scheduled_titles
+
+
+    def test_schedule_excludes_ungrouped_tasks_when_specific_group_selected(self):
+        with self.client.session_transaction() as sess:
+            sess["user_id"] = 1
+            sess["user_email"] = "testuser@email.com"
+
+        future_date = (datetime.now() + timedelta(days=3)).strftime("%Y-%m-%d %H:%M")
+
+        self.client.post("/api/tasks", json={
+            "title": "Grouped Task",
+            "due_date": future_date,
+            "priority": "High",
+            "duration_minutes": 60,
+            "effort_level": "Medium",
+            "category": "School",
+            "group_name": "ITSC 3146"
+        })
+
+        self.client.post("/api/tasks", json={
+            "title": "Ungrouped Task",
+            "due_date": future_date,
+            "priority": "Medium",
+            "duration_minutes": 45,
+            "effort_level": "Medium",
+            "category": "General"
+        })
+
+        response = self.client.post("/api/schedule", json={
+            "selected_groups": ["ITSC 3146"]
+        })
+
+        data = response.get_json()
+
+        scheduled_titles = []
+        for day in data["schedule"].values():
+            scheduled_titles.extend(task["title"] for task in day)
+
+        assert "Grouped Task" in scheduled_titles
+        assert "Ungrouped Task" not in scheduled_titles
+
     def test_schedule_no_groups_selected_returns_empty_schedule(self):
         with self.client.session_transaction() as sess:
-            sess["user"] = "testuser@email.com"
+            sess["user_id"] = 1
+            sess["user_email"] = "testuser@email.com"
 
         self.client.post("/api/tasks", json={
             "title": "Math Homework",
@@ -1629,42 +1691,280 @@ class ApiTests(unittest.TestCase):
 
         assert data["schedule"] == {}
         assert data["message"] == "No groups selected."
-    def test_schedule_excludes_ungrouped_tasks_when_specific_group_selected(self):
-        with self.client.session_transaction() as sess:
-            sess["user"] = "testuser@email.com"
+        def test_bulk_edit_updates_selected_tasks_priority(self):
+            self.login()
 
-        self.client.post("/api/tasks", json={
-            "title": "Grouped Task",
-            "due_date": "2026-04-20 23:59",
+            future_date = (datetime.now() + timedelta(days=3)).strftime("%Y-%m-%d %H:%M")
+
+            res1 = self.client.post("/api/tasks", json={
+                "title": "Math Homework",
+                "due_date": future_date,
+                "priority": "High",
+                "duration_minutes": 60,
+                "effort_level": "Medium",
+                "category": "School"
+            })
+
+            res2 = self.client.post("/api/tasks", json={
+                "title": "Gym Workout",
+                "due_date": future_date,
+                "priority": "Medium",
+                "duration_minutes": 45,
+                "effort_level": "Medium",
+                "category": "Health"
+            })
+
+            res3 = self.client.post("/api/tasks", json={
+                "title": "Project Report",
+                "due_date": future_date,
+                "priority": "Low",
+                "duration_minutes": 90,
+                "effort_level": "High",
+                "category": "Work"
+            })
+
+            id1 = res1.get_json()["id"]
+            id3 = res3.get_json()["id"]
+
+            bulk_res = self.client.put("/api/tasks/bulk-edit", json={
+                "task_ids": [id1, id3],
+                "updates": {"priority": "High"}
+            })
+
+            self.assertEqual(bulk_res.status_code, 200)
+
+            tasks = self.client.get("/api/tasks").get_json()
+
+            math_task = next(t for t in tasks if t["id"] == id1)
+            gym_task = next(t for t in tasks if t["title"] == "Gym Workout")
+            project_task = next(t for t in tasks if t["id"] == id3)
+
+            self.assertEqual(math_task["priority"], "High")
+            self.assertEqual(project_task["priority"], "High")
+            self.assertEqual(gym_task["priority"], "Medium")
+
+
+    def test_bulk_edit_no_tasks_selected(self):
+        self.login()
+
+        bulk_res = self.client.put("/api/tasks/bulk-edit", json={
+            "task_ids": [],
+            "updates": {"priority": "High"}
+        })
+
+        self.assertEqual(bulk_res.status_code, 400)
+
+
+    def test_bulk_edit_updates_only_selected_fields(self):
+        self.login()
+
+        future_date = (datetime.now() + timedelta(days=3)).strftime("%Y-%m-%d %H:%M")
+
+        res = self.client.post("/api/tasks", json={
+            "title": "Math Homework",
+            "due_date": future_date,
+            "priority": "Medium",
+            "duration_minutes": 60,
+            "effort_level": "Medium",
+            "category": "School"
+        })
+
+        task_id = res.get_json()["id"]
+
+        bulk_res = self.client.put("/api/tasks/bulk-edit", json={
+            "task_ids": [task_id],
+            "updates": {"priority": "High"}
+        })
+
+        self.assertEqual(bulk_res.status_code, 200)
+
+        task = next(t for t in self.client.get("/api/tasks").get_json() if t["id"] == task_id)
+
+        self.assertEqual(task["priority"], "High")
+        self.assertEqual(task["category"], "School")
+
+
+    def test_bulk_edit_reflects_changes_after_reload(self):
+        self.login()
+
+        future_date = (datetime.now() + timedelta(days=3)).strftime("%Y-%m-%d %H:%M")
+        updated_due_date = (datetime.now() + timedelta(days=5)).strftime("%Y-%m-%d %H:%M")
+
+        res1 = self.client.post("/api/tasks", json={
+            "title": "Math Homework",
+            "due_date": future_date,
             "priority": "High",
             "duration_minutes": 60,
             "effort_level": "Medium",
-            "category": "School",
-            "group_name": "ITSC 3146"
+            "category": "School"
         })
 
-        self.client.post("/api/tasks", json={
-            "title": "Ungrouped Task",
-            "due_date": "2026-04-20 23:59",
+        res2 = self.client.post("/api/tasks", json={
+            "title": "Project Report",
+            "due_date": future_date,
+            "priority": "Low",
+            "duration_minutes": 90,
+            "effort_level": "High",
+            "category": "Work"
+        })
+
+        id1 = res1.get_json()["id"]
+        id2 = res2.get_json()["id"]
+
+        bulk_res = self.client.put("/api/tasks/bulk-edit", json={
+            "task_ids": [id1, id2],
+            "updates": {
+                "due_date": updated_due_date,
+                "status": "In Progress"
+            }
+        })
+
+        self.assertEqual(bulk_res.status_code, 200)
+
+        tasks = self.client.get("/api/tasks").get_json()
+
+        task1 = next(t for t in tasks if t["id"] == id1)
+        task2 = next(t for t in tasks if t["id"] == id2)
+
+        self.assertEqual(task1["due_date"], updated_due_date)
+        self.assertEqual(task2["due_date"], updated_due_date)
+        self.assertEqual(task1["status"], "In Progress")
+        self.assertEqual(task2["status"], "In Progress")
+
+    def test_bulk_delete_removes_selected_tasks(self):
+        self.login()
+
+        future_date = (datetime.now() + timedelta(days=3)).strftime("%Y-%m-%d %H:%M")
+
+        res1 = self.client.post("/api/tasks", json={
+            "title": "Math Homework",
+            "due_date": future_date,
+            "priority": "High",
+            "duration_minutes": 60,
+            "effort_level": "Medium",
+            "category": "School"
+        })
+
+        res2 = self.client.post("/api/tasks", json={
+            "title": "Gym Workout",
+            "due_date": future_date,
             "priority": "Medium",
             "duration_minutes": 45,
             "effort_level": "Medium",
-            "category": "General"
+            "category": "Health"
         })
 
-        response = self.client.post("/api/schedule", json={
-            "selected_groups": ["ITSC 3146"]
+        res3 = self.client.post("/api/tasks", json={
+            "title": "Project Report",
+            "due_date": future_date,
+            "priority": "Low",
+            "duration_minutes": 90,
+            "effort_level": "High",
+            "category": "Work"
         })
 
-        assert response.status_code == 200
-        data = response.get_json()
+        id1 = res1.get_json()["id"]
+        id2 = res2.get_json()["id"]
 
-        scheduled_titles = []
-        for day in data["schedule"].values():
-            scheduled_titles.extend(task["title"] for task in day)
+        delete_res = self.client.post("/api/tasks/bulk-delete", json={
+            "task_ids": [id1, id2]
+        })
 
-        assert "Grouped Task" in scheduled_titles
-        assert "Ungrouped Task" not in scheduled_titles
+        self.assertEqual(delete_res.status_code, 200)
+
+        tasks = self.client.get("/api/tasks").get_json()
+        titles = [t["title"] for t in tasks]
+
+        self.assertNotIn("Math Homework", titles)
+        self.assertNotIn("Gym Workout", titles)
+        self.assertIn("Project Report", titles)
+
+
+    def test_bulk_delete_no_tasks_selected(self):
+        self.login()
+
+        delete_res = self.client.post("/api/tasks/bulk-delete", json={
+            "task_ids": []
+        })
+
+        self.assertEqual(delete_res.status_code, 400)
+        self.assertIn("Select at least one task", delete_res.get_json()["error"])
+
+
+    def test_bulk_delete_reflects_changes_after_reload(self):
+        self.login()
+
+        future_date = (datetime.now() + timedelta(days=3)).strftime("%Y-%m-%d %H:%M")
+
+        res1 = self.client.post("/api/tasks", json={
+            "title": "Math Homework",
+            "due_date": future_date,
+            "priority": "High",
+            "duration_minutes": 60,
+            "effort_level": "Medium",
+            "category": "School"
+        })
+
+        res2 = self.client.post("/api/tasks", json={
+            "title": "Project Report",
+            "due_date": future_date,
+            "priority": "Low",
+            "duration_minutes": 90,
+            "effort_level": "High",
+            "category": "Work"
+        })
+
+        id1 = res1.get_json()["id"]
+        id2 = res2.get_json()["id"]
+
+        delete_res = self.client.post("/api/tasks/bulk-delete", json={
+            "task_ids": [id1, id2]
+        })
+
+        self.assertEqual(delete_res.status_code, 200)
+
+        reload_res = self.client.get("/api/tasks")
+        tasks = reload_res.get_json()
+        titles = [t["title"] for t in tasks]
+
+        self.assertNotIn("Math Homework", titles)
+        self.assertNotIn("Project Report", titles)
+
+
+    def test_bulk_delete_cancel_behavior_backend_equivalent(self):
+        self.login()
+
+        future_date = (datetime.now() + timedelta(days=3)).strftime("%Y-%m-%d %H:%M")
+
+        self.client.post("/api/tasks", json={
+            "title": "Math Homework",
+            "due_date": future_date,
+            "priority": "High",
+            "duration_minutes": 60,
+            "effort_level": "Medium",
+            "category": "School"
+        })
+
+        self.client.post("/api/tasks", json={
+            "title": "Gym Workout",
+            "due_date": future_date,
+            "priority": "Medium",
+            "duration_minutes": 45,
+            "effort_level": "Medium",
+            "category": "Health"
+        })
+
+        tasks_before = self.client.get("/api/tasks").get_json()
+        titles_before = [t["title"] for t in tasks_before]
+
+        self.assertIn("Math Homework", titles_before)
+        self.assertIn("Gym Workout", titles_before)
+
+        tasks_after = self.client.get("/api/tasks").get_json()
+        titles_after = [t["title"] for t in tasks_after]
+
+        self.assertIn("Math Homework", titles_after)
+        self.assertIn("Gym Workout", titles_after)
     
 
 

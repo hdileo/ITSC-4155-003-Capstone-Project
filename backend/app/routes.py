@@ -160,7 +160,7 @@ from functools import wraps
 from flask import Blueprint, jsonify, request, send_from_directory, session, redirect
 from werkzeug.security import check_password_hash
 from .storage import create_task, get_all_tasks, update_task, delete_task, generate_schedule
-from app.database import get_connection
+from .database import get_connection
 import os
 import re
 
@@ -172,6 +172,9 @@ auth = Blueprint("auth", __name__)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FRONTEND_DIR = os.path.abspath(os.path.join(BASE_DIR, "../../Frontend"))
+
+MAX_LOGIN_ATTEMPTS = 5
+LOGIN_LOCK_MINUTES = 10
 
 
 
@@ -228,8 +231,10 @@ def login():
         failed_attempts = user["failed_attempts"] + 1
         new_lock_until = None
 
-        if failed_attempts >= 5:
-            new_lock_until = (datetime.now() + timedelta(minutes=10)).isoformat()
+        if failed_attempts >= MAX_LOGIN_ATTEMPTS:
+            new_lock_until = (
+                datetime.now() + timedelta(minutes=LOGIN_LOCK_MINUTES)
+            ).isoformat()
 
         cursor.execute("""
             UPDATE users
@@ -267,7 +272,6 @@ def login():
             "email": user["email"]
         }
     }), 200
-
 
 def login_required(fn):
     @wraps(fn)

@@ -253,6 +253,11 @@ function formatForBackend(datetimeLocalValue) {
     : datetimeLocalValue;
 }
 
+function redirectToLogin(message = "Session expired. Please log in again.") {
+  localStorage.setItem("loginRedirectMessage", message);
+  window.location.href = "/login";
+}
+
 /* 
 
 Feature: Date Parsing and Future Date Validation
@@ -426,6 +431,11 @@ async function fetchTasks(sort = "") {
 
     const tasks = await res.json();
 
+    if (res.status === 401) {
+      redirectToLogin();
+      return [];
+    }
+    
     if (!res.ok) {
       throw new Error(tasks.error || "Failed to load tasks.");
     }
@@ -1212,6 +1222,11 @@ if (form) {
 
       const data = await res.json();
 
+      if (res.status === 401) {
+        redirectToLogin();
+        return;
+      }
+
       if (!res.ok) {
         if (msg) {
           msg.textContent = data.error || "Failed to create task.";
@@ -1411,6 +1426,11 @@ async function handleDeleteTask(taskId, taskTitle) {
 
     const data = await res.json();
 
+    if (res.status === 401) {
+      redirectToLogin();
+      return;
+    }
+
     if (!res.ok) {
       msg.textContent = data.error || "Task could not be deleted.";
       msg.className = "message error";
@@ -1496,6 +1516,11 @@ if (editForm) {
       });
 
       const data = await res.json();
+
+      if (res.status === 401) {
+        redirectToLogin();
+        return;
+      }
 
       if (!res.ok) {
         editMessage.textContent = data.error || "Task update failed.";
@@ -2189,6 +2214,11 @@ async function handleGenerateSchedule() {
     });
 
     const data = await res.json();
+
+    if (res.status === 401) {
+      redirectToLogin();
+      return;
+    }
 
     if (!res.ok) {
       scheduleMessage.textContent = data.error || "Failed to generate schedule.";
@@ -3440,6 +3470,11 @@ async function handleBulkDelete() {
 
     const data = await res.json();
 
+    if (res.status === 401) {
+      redirectToLogin();
+      return;
+    }
+
     if (!res.ok) {
       showBulkActionMessage(data.error || "Bulk delete failed.");
       return;
@@ -3501,6 +3536,11 @@ async function handleBulkEditSubmit(e) {
     });
 
     const data = await res.json();
+
+    if (res.status === 401) {
+      redirectToLogin();
+      return;
+    }
 
     if (!res.ok) {
       showBulkEditMessage(data.error || "Bulk edit failed.");

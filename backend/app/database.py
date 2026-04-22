@@ -68,21 +68,13 @@ def init_db():
     """)
 
     cursor.execute("""
-
     CREATE TABLE IF NOT EXISTS users (
-
         user_id INTEGER PRIMARY KEY AUTOINCREMENT,
-
         email TEXT NOT NULL UNIQUE,
-
         password_hash TEXT NOT NULL,
-
         failed_attempts INTEGER NOT NULL DEFAULT 0,
-
         lock_until TEXT
-
     )
-
     """)
 
     # -------------------------------
@@ -90,6 +82,15 @@ def init_db():
     # -------------------------------
     cursor.execute("PRAGMA table_info(tasks)")
     columns = [col[1] for col in cursor.fetchall()]
+
+    cursor.execute("PRAGMA table_info(users)")
+    user_columns = [col[1] for col in cursor.fetchall()]
+
+    if "failed_attempts" not in user_columns:
+        cursor.execute("ALTER TABLE users ADD COLUMN failed_attempts INTEGER NOT NULL DEFAULT 0")
+
+    if "lock_until" not in user_columns:
+        cursor.execute("ALTER TABLE users ADD COLUMN lock_until TEXT")
 
     if "start_after" not in columns:
         cursor.execute("ALTER TABLE tasks ADD COLUMN start_after TEXT")
