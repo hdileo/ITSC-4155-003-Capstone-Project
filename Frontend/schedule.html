@@ -213,9 +213,9 @@ components of the project.
               <h2>Build Schedule</h2>
             </div>
           </div>
-
-          <div class="schedule-controls">
-            <div class="control-group">
+      
+          <div class="schedule-controls-grid">
+            <div class="control-group schedule-range-block">
               <label for="scheduleRange">Schedule Range</label>
               <div class="select-wrap">
                 <select id="scheduleRange">
@@ -224,28 +224,27 @@ components of the project.
                 </select>
               </div>
             </div>
-
-            <div class="group-filter-card">
+      
+            <div class="group-filter-card schedule-groups-block">
               <div class="group-filter-header">✦ Schedule Groups</div>
-            
+      
               <div class="group-filter-options">
                 <label class="group-pill">
                   <input type="checkbox" id="allGroupsCheckbox" checked>
                   <span>All</span>
                 </label>
-            
+      
                 <div id="groupCheckboxContainer" class="group-pill-container"></div>
               </div>
-            
+      
               <div id="selectedGroupsLabel" class="group-filter-label">
                 Showing: All Groups
               </div>
             </div>
-
-
-            <div class="schedule-time-range-card">
+      
+            <div class="schedule-time-range-card schedule-time-block">
               <div class="schedule-time-range-header">✦ Daily Time Range</div>
-            
+      
               <div class="time-range-row">
                 <div class="time-range-field">
                   <label>Start Time</label>
@@ -265,7 +264,7 @@ components of the project.
                       <option value="11">11</option>
                       <option value="12">12</option>
                     </select>
-            
+      
                     <select id="startMinute">
                       <option value="">MM</option>
                       <option value="00">00</option>
@@ -273,7 +272,7 @@ components of the project.
                       <option value="30">30</option>
                       <option value="45">45</option>
                     </select>
-            
+      
                     <select id="startMeridiem">
                       <option value="">AM/PM</option>
                       <option value="AM">AM</option>
@@ -281,7 +280,7 @@ components of the project.
                     </select>
                   </div>
                 </div>
-            
+      
                 <div class="time-range-field">
                   <label>End Time</label>
                   <div class="time-picker-row">
@@ -300,7 +299,7 @@ components of the project.
                       <option value="11">11</option>
                       <option value="12">12</option>
                     </select>
-            
+      
                     <select id="endMinute">
                       <option value="">MM</option>
                       <option value="00">00</option>
@@ -308,7 +307,7 @@ components of the project.
                       <option value="30">30</option>
                       <option value="45">45</option>
                     </select>
-            
+      
                     <select id="endMeridiem">
                       <option value="">AM/PM</option>
                       <option value="AM">AM</option>
@@ -317,11 +316,9 @@ components of the project.
                   </div>
                 </div>
               </div>
-            
-              
             </div>
-
-            <div class="control-group">
+      
+            <div class="control-group max-tasks-block">
               <label for="maxTasksPerDay">Max Tasks Per Day</label>
               <div class="select-wrap">
                 <select id="maxTasksPerDay">
@@ -334,31 +331,31 @@ components of the project.
               </div>
             </div>
           </div>
-
+      
           <button id="generateScheduleBtn" class="generate-btn" type="button">
             Generate Schedule
           </button>
-
+      
           <button id="downloadCsvBtn" class="app-nav-btn secondary" type="button">
             Download CSV
           </button>
-          
+      
           <button id="downloadGoogleCsvBtn" class="app-nav-btn secondary" type="button">
             Export Google Calendar CSV
           </button>
-          
+      
           <p id="scheduleMessage" class="message"></p>
-          
+      
           <div class="time-range-note">
             Leave blank to use the default range: 9:00 AM – 5:00 PM
           </div>
-          
+      
           <div id="activeTimeRangeLabel" class="active-time-range-label">
             Viewing: 9:00 AM – 5:00 PM
           </div>
-          </section>
-          
-          <section class="schedule-side-column">
+        </section>
+      
+        <section class="schedule-side-column">
           <article class="dashboard-panel">
             <div class="panel-header">
               <div>
@@ -370,7 +367,7 @@ components of the project.
               Generate a schedule to see smart insights.
             </p>
           </article>
-
+      
           <article class="dashboard-panel">
             <div class="panel-header">
               <div>

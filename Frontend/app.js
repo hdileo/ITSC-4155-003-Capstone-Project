@@ -647,6 +647,71 @@ function updateSelectAllCheckboxState() {
     checkedCount > 0 && checkedCount < rowCheckboxes.length;
 }
 
+function openNotesModal(taskTitle, notesText) {
+  const existing = document.getElementById("notesModal");
+  if (existing) existing.remove();
+
+  const safeNotes = notesText && notesText.trim()
+    ? notesText
+    : "No additional notes have been added for this task.";
+
+  const modal = document.createElement("div");
+  modal.id = "notesModal";
+  modal.className = "notes-modal-overlay";
+  modal.setAttribute("role", "dialog");
+  modal.setAttribute("aria-modal", "true");
+  modal.setAttribute("aria-label", "Task Notes");
+
+  modal.innerHTML = `
+    <div class="notes-modal-box">
+      <div class="notes-modal-header">
+        <div>
+          <p class="panel-eyebrow">Notes</p>
+          <h2 class="notes-modal-title">${taskTitle}</h2>
+        </div>
+        <button class="notes-modal-close" aria-label="Close notes">&times;</button>
+      </div>
+
+      <div class="notes-modal-body">
+        <textarea class="notes-modal-textarea" readonly>${safeNotes}</textarea>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  const close = () => {
+    modal.classList.add("notes-modal-closing");
+    setTimeout(() => {
+      if (modal.parentNode) modal.remove();
+    }, 200);
+  };
+
+  const closeBtn = modal.querySelector(".notes-modal-close");
+  if (closeBtn) {
+    closeBtn.addEventListener("click", close);
+  }
+
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) {
+      close();
+    }
+  });
+
+  const escHandler = (e) => {
+    if (e.key === "Escape") {
+      close();
+      document.removeEventListener("keydown", escHandler);
+    }
+  };
+
+  document.addEventListener("keydown", escHandler);
+
+  requestAnimationFrame(() => {
+    modal.classList.add("notes-modal-visible");
+  });
+}
+
 function renderTasks(tasks) {
   tbody.innerHTML = "";
 
@@ -708,6 +773,7 @@ function renderTasks(tasks) {
             <span class="task-meta-pill">${task.duration_minutes} min</span>
             <span class="task-meta-pill">${task.effort_level} Effort</span>
             <span class="task-meta-pill">Start: ${formattedStartAfter}</span>
+            <span class="task-meta-pill notes-pill">📝 Notes</span>
             ${task.group_name ? `<span class="task-meta-pill group-pill">${task.group_name}</span>` : ""}
           </div>
         </div>
@@ -752,6 +818,21 @@ function renderTasks(tasks) {
         markTaskComplete(task);
       });
     }
+    const notesPill = row.querySelector(".notes-pill");
+if (notesPill) {
+  const previewText = task.notes && task.notes.trim()
+    ? (task.notes.length > 120
+        ? task.notes.slice(0, 120).trimEnd() + "…"
+        : task.notes)
+    : "No additional notes have been added for this task.";
+
+  notesPill.setAttribute("title", previewText);
+
+  notesPill.addEventListener("click", (e) => {
+    e.stopPropagation();
+    openNotesModal(task.title, task.notes || "");
+  });
+}
 
     tbody.appendChild(row);
   });
